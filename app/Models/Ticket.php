@@ -11,27 +11,42 @@ class Ticket extends Model
     use HasFactory;
 
     protected $fillable = [
-        'reservation_id',
-        'ticket_code',
-        'qr_code_hash',
-        'pdf_path',
-        'is_checked_in',
-        'checked_in_at',
-        'checked_in_by',
+        'order_id', 'event_id', 'ticket_tier_id', 'user_id',
+        'ticket_code', 'qr_code_hash', 'status',
+        'checked_in_at', 'checked_in_by',
     ];
 
     protected $casts = [
-        'is_checked_in' => 'boolean',
         'checked_in_at' => 'datetime',
     ];
 
-    public function reservation(): BelongsTo
+    public function order(): BelongsTo
     {
-        return $this->belongsTo(Reservation::class);
+        return $this->belongsTo(Order::class);
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function ticketTier(): BelongsTo
+    {
+        return $this->belongsTo(TicketTier::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function checkedInBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'checked_in_by');
+    }
+
+    public function isCheckedIn(): bool
+    {
+        return $this->status === 'checked_in';
     }
 }

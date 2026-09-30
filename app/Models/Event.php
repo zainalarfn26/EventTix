@@ -32,8 +32,27 @@ class Event extends Model
         return $this->belongsTo(Venue::class);
     }
 
-    public function reservations(): HasMany
+    public function ticketTiers(): HasMany
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(TicketTier::class)->orderBy('sort_order');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    /**
+     * Get the lowest active ticket tier price for display.
+     */
+    public function getLowestPriceAttribute(): ?string
+    {
+        $min = $this->ticketTiers->where('is_active', true)->min('price');
+        return $min !== null ? number_format($min, 0, ',', '.') : null;
     }
 }

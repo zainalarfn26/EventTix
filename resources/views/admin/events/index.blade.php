@@ -1,75 +1,75 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Event - Admin SeatPulse')
+@section('title', 'Kelola Event - Admin EventTix')
 
 @section('content')
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <a href="{{ route('admin.dashboard') }}" class="text-xs text-indigo-400 font-semibold hover:underline">← Kembali ke Dashboard</a>
-            <h1 class="text-3xl font-black text-white mt-1">Manajemen Event & Konser</h1>
-        </div>
-
-        <a href="{{ route('admin.events.create') }}" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-5 rounded-xl shadow-lg transition">
+<div>
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-extrabold text-white">📅 Kelola Event</h1>
+        <a href="{{ route('admin.events.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition">
             ➕ Buat Event Baru
         </a>
     </div>
 
     @if(session('success'))
-        <div class="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-300 text-sm font-semibold">
+        <div class="mb-4 p-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-sm font-semibold">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-300">
-                <thead class="bg-slate-900/80 text-slate-400 uppercase font-mono border-b border-slate-700">
-                    <tr>
-                        <th class="p-4">Nama Event</th>
-                        <th class="p-4">Venue & Kota</th>
-                        <th class="p-4">Jadwal Concert</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-700/60">
-                    @forelse($events as $evt)
-                        <tr class="hover:bg-slate-700/30 transition">
-                            <td class="p-4 font-bold text-white text-sm">
-                                <a href="{{ route('events.show', $evt->slug) }}" class="hover:text-indigo-400">
-                                    {{ $evt->title }}
-                                </a>
-                            </td>
-                            <td class="p-4 text-slate-300">
-                                {{ $evt->venue->name ?? 'Venue' }} ({{ $evt->venue->city ?? '' }})
-                            </td>
-                            <td class="p-4 text-slate-400">
-                                {{ $evt->start_time->format('d M Y, H:i') }} WIB
-                            </td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                    ● {{ strtoupper($evt->status) }}
-                                </span>
-                            </td>
-                            <td class="p-4 text-center">
-                                <form action="{{ route('admin.events.destroy', $evt->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus event ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-rose-400 hover:text-rose-300 text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/30 transition">
-                                        🗑️ Hapus
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="p-8 text-center text-slate-500">Belum ada event. Klik "Buat Event Baru" di atas.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <div class="space-y-4">
+        @forelse($events as $event)
+            <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 class="text-lg font-bold text-white">{{ $event->title }}</h2>
+                            <span class="text-xs px-2 py-0.5 rounded-full font-bold
+                                @if($event->status === 'published') bg-emerald-500/20 text-emerald-300
+                                @elseif($event->status === 'draft') bg-amber-500/20 text-amber-300
+                                @elseif($event->status === 'completed') bg-blue-500/20 text-blue-300
+                                @else bg-red-500/20 text-red-300 @endif">
+                                {{ strtoupper($event->status) }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-slate-400">
+                            📍 {{ $event->venue->name ?? '-' }} · 📅 {{ $event->start_time->translatedFormat('d M Y') }} · 🕐 {{ $event->start_time->format('H:i') }} WIB
+                        </p>
+
+                        {{-- Ticket Tiers Summary --}}
+                        @if($event->ticketTiers->isNotEmpty())
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @foreach($event->ticketTiers as $tier)
+                                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-semibold"
+                                         style="border-color: {{ $tier->color }}60; background-color: {{ $tier->color }}10; color: {{ $tier->color }}">
+                                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $tier->color }}"></div>
+                                        {{ $tier->name }}:
+                                        <span class="text-slate-300">{{ $tier->sold_count }}/{{ $tier->quota }}</span>
+                                        <span class="text-slate-500">(Rp{{ number_format($tier->price, 0, ',', '.') }})</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('events.show', $event->slug) }}" target="_blank"
+                           class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition">
+                            👁️ Lihat
+                        </a>
+                        <form action="{{ route('admin.events.destroy', $event) }}" method="POST"
+                              onsubmit="return confirm('Yakin ingin menghapus event ini?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-300 text-xs font-bold rounded-lg transition border border-red-500/30">
+                                🗑️ Hapus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="text-center py-10 text-slate-500">Belum ada event. Buat event baru sekarang!</div>
+        @endforelse
     </div>
 </div>
 @endsection

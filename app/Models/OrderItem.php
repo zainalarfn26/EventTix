@@ -6,29 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Transaction extends Model
+class OrderItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'order_id',
-        'order_code',
-        'gross_amount',
-        'payment_type',
-        'snap_token',
-        'transaction_status',
-        'raw_payload',
-        'paid_at',
+        'order_id', 'ticket_tier_id',
+        'quantity', 'unit_price', 'subtotal',
     ];
 
     protected $casts = [
-        'gross_amount' => 'decimal:2',
-        'raw_payload' => 'array',
-        'paid_at' => 'datetime',
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
     ];
 
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function ticketTier(): BelongsTo
+    {
+        return $this->belongsTo(TicketTier::class);
     }
 }

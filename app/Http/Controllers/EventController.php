@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\Reservation;
 
 class EventController extends Controller
 {
     public function index()
     {
-        $events = Event::with('venue')
+        $events = Event::with(['venue', 'ticketTiers' => fn($q) => $q->where('is_active', true)])
             ->where('status', 'published')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -19,14 +18,11 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
-        $event->load(['venue.seats']);
+        $event->load([
+            'venue',
+            'ticketTiers' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+        ]);
 
-        // Fetch active locked/booked reservations for this event
-        $activeReservations = Reservation::where('event_id', $event->id)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->get()
-            ->keyBy('seat_id');
-
-        return view('events.show', compact('event', 'activeReservations'));
+        return view('events.show', compact('event'));
     }
 }

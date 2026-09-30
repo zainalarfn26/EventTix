@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Login - SeatPulse')
+@section('title', 'Login - EventTix')
 
 @section('content')
 <div class="max-w-md mx-auto my-12" x-data="{ email: '', password: '' }">
     <div class="bg-slate-800 border border-slate-700 rounded-3xl p-8 shadow-2xl space-y-6">
         <div class="text-center">
             <span class="text-4xl">🔐</span>
-            <h1 class="text-2xl font-black text-white mt-2">Masuk ke SeatPulse</h1>
+            <h1 class="text-2xl font-black text-white mt-2">Masuk ke EventTix</h1>
             <p class="text-xs text-slate-400 mt-1">Akses dashboard admin, organizer, atau akun penonton.</p>
         </div>
 

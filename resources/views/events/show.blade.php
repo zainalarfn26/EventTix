@@ -1,107 +1,173 @@
 @extends('layouts.app')
 
-@section('title', $event->title . ' - Real-Time Seat Reservation')
+@section('title', $event->title . ' - EventTix')
 
 @section('content')
-<div x-data="seatMapApp()" class="space-y-8">
-    <!-- Event Details Header -->
-    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <a href="{{ route('events.index') }}" class="text-xs text-indigo-400 font-semibold hover:underline">← Kembali ke Lineup Event</a>
-            <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-1">{{ $event->title }}</h1>
-            <p class="text-slate-400 text-sm mt-1">📍 {{ $event->venue->name }} — {{ $event->start_time->format('d M Y, H:i') }} WIB</p>
-        </div>
+<div x-data="ticketOrder()" x-cloak>
 
-        <!-- Legend Bar -->
-        <div class="flex items-center gap-4 bg-slate-900/60 p-3 rounded-xl border border-slate-700/60 text-xs font-medium">
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-400"></span>
-                <span>Tersedia</span>
+    {{-- Event Header --}}
+    <div class="mb-8">
+        <a href="{{ route('events.index') }}" class="text-sm text-indigo-400 hover:text-indigo-300 mb-4 inline-flex items-center gap-1">
+            ← Kembali ke Daftar Event
+        </a>
+        <div class="mt-4 flex flex-col lg:flex-row gap-8">
+            {{-- Banner --}}
+            <div class="lg:w-2/5">
+                <div class="aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-900/60 via-purple-900/40 to-slate-800 flex items-center justify-center">
+                    @if($event->banner_image)
+                        <img src="{{ Storage::url($event->banner_image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
+                    @else
+                        <div class="text-8xl opacity-30">🎤</div>
+                    @endif
+                </div>
             </div>
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-amber-500 animate-pulse border border-amber-400"></span>
-                <span>Locked (Pending)</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-rose-900/80 border border-rose-700 opacity-60"></span>
-                <span>Terjual (Booked)</span>
+
+            {{-- Event Details --}}
+            <div class="lg:w-3/5">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-4">{{ $event->title }}</h1>
+                <div class="space-y-3 text-slate-300">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📍</span>
+                        <div>
+                            <p class="font-semibold text-white">{{ $event->venue->name }}</p>
+                            <p class="text-sm text-slate-400">{{ $event->venue->address }}, {{ $event->venue->city }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📅</span>
+                        <p class="font-semibold">{{ $event->start_time->translatedFormat('l, d F Y') }}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🕐</span>
+                        <p>{{ $event->start_time->format('H:i') }} — {{ $event->end_time->format('H:i') }} WIB</p>
+                    </div>
+                </div>
+                @if($event->description)
+                    <p class="mt-4 text-slate-400 leading-relaxed">{{ $event->description }}</p>
+                @endif
             </div>
         </div>
     </div>
 
-    <!-- Interactive Seat Arena Layout -->
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl overflow-x-auto">
-        <!-- Stage Visual -->
-        <div class="w-full max-w-2xl mx-auto mb-10 text-center">
-            <div class="w-full h-10 bg-gradient-to-b from-indigo-500/30 to-purple-600/10 border-t-2 border-indigo-400 rounded-b-3xl flex items-center justify-center shadow-lg shadow-indigo-500/10">
-                <span class="text-xs font-black tracking-widest text-indigo-200 uppercase">✨ MAIN STAGE / PANGGUNG UTAMA ✨</span>
+    {{-- Venue Zone Map --}}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-white mb-4">🗺️ Denah Zona</h2>
+        <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 relative overflow-hidden">
+            {{-- Stage --}}
+            <div class="w-3/4 mx-auto mb-6 bg-gradient-to-r from-slate-600 via-slate-500 to-slate-600 text-center py-3 rounded-xl">
+                <span class="text-sm font-bold text-white tracking-widest uppercase">🎵 Panggung / Stage</span>
+            </div>
+
+            {{-- Zone Visualization --}}
+            <div class="space-y-3">
+                @foreach($event->ticketTiers as $tier)
+                    <div class="rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all cursor-pointer hover:scale-[1.01]"
+                         style="background-color: {{ $tier->color }}15; border-color: {{ $tier->color }}60;"
+                         @click="selectTier({{ $tier->id }})">
+                        <div class="flex items-center gap-3">
+                            <div class="w-5 h-5 rounded-full flex-shrink-0" style="background-color: {{ $tier->color }}"></div>
+                            <div>
+                                <span class="font-bold text-white text-sm">{{ $tier->zone_label ?? $tier->name }}</span>
+                                <span class="text-xs text-slate-400 ml-2">{{ $tier->name }}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            @if($tier->available_quota > 0)
+                                <span class="text-xs px-2 py-0.5 rounded-full font-bold text-emerald-300 bg-emerald-500/20">{{ $tier->available_quota }} tersisa</span>
+                            @else
+                                <span class="text-xs px-2 py-0.5 rounded-full font-bold text-red-300 bg-red-500/20">SOLD OUT</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
+    </div>
 
-        <!-- Seat Grid -->
-        <div class="max-w-3xl mx-auto space-y-4">
-            @php
-                $groupedSeats = $event->venue->seats->groupBy('row');
-            @endphp
+    {{-- Ticket Tier Selection --}}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-white mb-4">🎫 Pilih Kelas Tiket</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($event->ticketTiers as $tier)
+                <div class="bg-slate-800/60 border-2 rounded-2xl p-5 transition-all duration-200 cursor-pointer"
+                     :class="selectedTiers[{{ $tier->id }}] ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-700 hover:border-slate-500'"
+                     @click="selectTier({{ $tier->id }})">
 
-            @foreach($groupedSeats as $row => $seatsInRow)
-                <div class="flex items-center justify-center gap-2">
-                    <span class="w-8 text-center text-xs font-bold text-slate-400">{{ $row }}</span>
-
-                    <div class="flex items-center gap-2">
-                        @foreach($seatsInRow as $seat)
-                            @php
-                                $reservation = $activeReservations->get($seat->id);
-                                $status = $reservation ? $reservation->status : 'available';
-                            @endphp
-
-                            <button
-                                @click="selectSeat({{ json_encode(['id' => $seat->id, 'number' => $seat->seat_number, 'category' => $seat->category, 'price' => number_format($seat->base_price, 0, ',', '.'), 'raw_price' => $seat->base_price, 'status' => $status]) }})"
-                                :class="getSeatClass({{ $seat->id }}, '{{ $status }}', '{{ $seat->category }}')"
-                                class="w-9 h-9 md:w-11 md:h-11 rounded-lg border text-xs font-bold transition transform hover:scale-105 flex items-center justify-center focus:outline-none shadow-md">
-                                {{ $seat->column }}
-                            </button>
-                        @endforeach
+                    {{-- Tier Header --}}
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded-full" style="background-color: {{ $tier->color }}"></div>
+                            <span class="text-lg font-extrabold text-white">{{ $tier->name }}</span>
+                        </div>
+                        <span class="text-xs px-2 py-1 rounded-full font-bold" style="background-color: {{ $tier->color }}30; color: {{ $tier->color }}">
+                            🏷️ Gelang {{ $tier->wristband_color }}
+                        </span>
                     </div>
 
-                    <span class="w-8 text-center text-xs font-bold text-slate-400">{{ $row }}</span>
+                    {{-- Price --}}
+                    <div class="mb-3">
+                        <span class="text-2xl font-extrabold text-white">Rp{{ number_format($tier->price, 0, ',', '.') }}</span>
+                        <span class="text-xs text-slate-400">/tiket</span>
+                    </div>
+
+                    {{-- Description --}}
+                    @if($tier->description)
+                        <p class="text-xs text-slate-400 mb-3 line-clamp-2">{{ $tier->description }}</p>
+                    @endif
+
+                    {{-- Zone & Availability --}}
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-4">
+                        <span>📍 {{ $tier->zone_label ?? '-' }}</span>
+                        @if($tier->available_quota > 0)
+                            <span class="text-emerald-400 font-bold">{{ $tier->available_quota }}/{{ $tier->quota }} tersisa</span>
+                        @else
+                            <span class="text-red-400 font-bold">SOLD OUT</span>
+                        @endif
+                    </div>
+
+                    {{-- Quantity Selector --}}
+                    @if($tier->available_quota > 0)
+                        <div class="flex items-center gap-3 justify-center" @click.stop>
+                            <button @click="decrementQty({{ $tier->id }})"
+                                    class="w-9 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold text-lg flex items-center justify-center transition">
+                                −
+                            </button>
+                            <span class="text-xl font-bold text-white w-8 text-center" x-text="selectedTiers[{{ $tier->id }}] || 0"></span>
+                            <button @click="incrementQty({{ $tier->id }}, {{ $tier->available_quota }})"
+                                    class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-lg flex items-center justify-center transition">
+                                +
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
     </div>
 
-    <!-- Active Selection Modal / Checkout Drawer -->
-    <div x-show="selectedSeat !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-6 relative">
-            <button @click="selectedSeat = null" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
-
+    {{-- Order Summary & Checkout --}}
+    <div x-show="totalItems > 0" x-transition
+         class="sticky bottom-4 z-40 bg-slate-800/95 backdrop-blur border border-indigo-500/50 rounded-2xl p-5 shadow-2xl shadow-indigo-500/20">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Konfirmasi Pemesanan Kursi</span>
-                <h3 class="text-2xl font-black text-white mt-1" x-text="'Kursi No. ' + selectedSeat?.number"></h3>
-                <p class="text-xs text-slate-400 mt-1" x-text="'Kategori: ' + selectedSeat?.category"></p>
+                <p class="text-sm text-slate-400">Total Pembayaran</p>
+                <p class="text-2xl font-extrabold text-white">Rp<span x-text="totalPrice.toLocaleString('id-ID')"></span></p>
+                <p class="text-xs text-slate-500" x-text="totalItems + ' tiket dipilih'"></p>
             </div>
-
-            <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-slate-400">Harga Tiket:</span>
-                    <span class="font-bold text-emerald-400" x-text="'Rp ' + selectedSeat?.price"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-400">Proteksi Lock:</span>
-                    <span class="text-xs font-semibold text-amber-300">Redis Mutex 10-Min Lock</span>
-                </div>
-            </div>
-
-            <!-- Error Banner -->
-            <div x-show="errorMessage" x-cloak class="p-3 bg-rose-500/20 border border-rose-500/50 rounded-xl text-xs text-rose-300" x-text="errorMessage"></div>
-
-            <button
-                @click="processLockAndPay()"
-                :disabled="isLoading"
-                class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                <span x-show="!isLoading">🔒 Kunci Kursi & Bayar via Midtrans</span>
-                <span x-show="isLoading" x-cloak>Processing...</span>
+            <button @click="checkout()"
+                    :disabled="loading"
+                    class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <span x-show="!loading">🎫 Checkout Sekarang</span>
+                <span x-show="loading" class="flex items-center gap-2">
+                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                    Memproses...
+                </span>
             </button>
+        </div>
+
+        {{-- Alert Messages --}}
+        <div x-show="alertMessage" x-transition class="mt-3 p-3 rounded-lg text-sm font-semibold"
+             :class="alertType === 'error' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'">
+            <span x-text="alertMessage"></span>
         </div>
     </div>
 </div>
@@ -109,91 +175,143 @@
 
 @push('scripts')
 <script>
-    function seatMapApp() {
-        return {
-            eventId: {{ $event->id }},
-            selectedSeat: null,
-            isLoading: false,
-            errorMessage: null,
+function ticketOrder() {
+    return {
+        eventId: {{ $event->id }},
+        selectedTiers: {},
+        tierPrices: {
+            @foreach($event->ticketTiers as $tier)
+                {{ $tier->id }}: {{ (int) $tier->price }},
+            @endforeach
+        },
+        loading: false,
+        alertMessage: '',
+        alertType: 'error',
 
-            selectSeat(seat) {
-                if (seat.status === 'confirmed') {
-                    alert('Kursi ini sudah terjual!');
-                    return;
-                }
-                this.selectedSeat = seat;
-                this.errorMessage = null;
-            },
+        get totalItems() {
+            return Object.values(this.selectedTiers).reduce((sum, qty) => sum + (qty || 0), 0);
+        },
 
-            getSeatClass(seatId, currentStatus, category) {
-                if (currentStatus === 'confirmed') {
-                    return 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed';
-                }
-                if (currentStatus === 'pending') {
-                    return 'bg-amber-500 border-amber-400 text-slate-950 font-black animate-pulse';
-                }
-                if (category === 'VVIP') {
-                    return 'bg-amber-600/30 border-amber-500 text-amber-300 hover:bg-amber-500 hover:text-slate-950';
-                }
-                if (category === 'VIP') {
-                    return 'bg-purple-600/30 border-purple-500 text-purple-300 hover:bg-purple-500 hover:text-white';
-                }
-                return 'bg-emerald-600/30 border-emerald-500 text-emerald-300 hover:bg-emerald-500 hover:text-white';
-            },
+        get totalPrice() {
+            let total = 0;
+            for (const [tierId, qty] of Object.entries(this.selectedTiers)) {
+                total += (this.tierPrices[tierId] || 0) * (qty || 0);
+            }
+            return total;
+        },
 
-            async processLockAndPay() {
-                if (!this.selectedSeat) return;
-                this.isLoading = true;
-                this.errorMessage = null;
+        selectTier(tierId) {
+            if (!this.selectedTiers[tierId]) {
+                this.selectedTiers[tierId] = 1;
+            }
+        },
 
-                try {
-                    const response = await fetch('{{ route("seats.lock") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            event_id: this.eventId,
-                            seat_id: this.selectedSeat.id
-                        })
-                    });
+        incrementQty(tierId, maxQty) {
+            const current = this.selectedTiers[tierId] || 0;
+            const max = Math.min(maxQty, 5); // Max 5 per tier per order
+            if (current < max) {
+                this.selectedTiers[tierId] = current + 1;
+            }
+        },
 
-                    const result = await response.json();
+        decrementQty(tierId) {
+            const current = this.selectedTiers[tierId] || 0;
+            if (current > 1) {
+                this.selectedTiers[tierId] = current - 1;
+            } else {
+                delete this.selectedTiers[tierId];
+            }
+        },
 
-                    if (response.ok && result.success) {
-                        const snapToken = result.data.snap_token;
-                        const orderId = result.data.order_id;
+        async checkout() {
+            this.alertMessage = '';
+            this.loading = true;
 
-                        // Trigger Midtrans Snap Popup
-                        window.snap.pay(snapToken, {
-                            onSuccess: (result) => {
-                                alert('Pembayaran Berhasil! Mengalihkan ke E-Ticket...');
-                                window.location.href = '/tickets/TKT-SP-SUCCESS';
+            const items = Object.entries(this.selectedTiers)
+                .filter(([_, qty]) => qty > 0)
+                .map(([tierId, qty]) => ({
+                    ticket_tier_id: parseInt(tierId),
+                    quantity: qty,
+                }));
+
+            if (items.length === 0) {
+                this.alertMessage = 'Pilih minimal 1 tiket untuk checkout.';
+                this.alertType = 'error';
+                this.loading = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ route("orders.checkout") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        event_id: this.eventId,
+                        items: items,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.data?.snap_token) {
+                    // Try to open Midtrans Snap popup
+                    if (typeof snap !== 'undefined' && !data.data.snap_token.startsWith('SANDBOX-TOKEN')) {
+                        snap.pay(data.data.snap_token, {
+                            onSuccess: async (result) => {
+                                this.alertMessage = '🎉 Pembayaran berhasil! Memverifikasi tiket Anda...';
+                                this.alertType = 'success';
+                                
+                                // Call verify endpoint manually since localhost cannot receive webhooks
+                                try {
+                                    await fetch('{{ route("orders.verify") }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                            'Accept': 'application/json',
+                                        },
+                                        body: JSON.stringify({ order_code: data.data.order_code }),
+                                    });
+                                } catch (e) {}
+
+                                setTimeout(() => window.location.href = '/orders/' + data.data.order_code + '/ticket', 1000);
                             },
                             onPending: (result) => {
-                                alert('Pembayaran Pending. Harap lunasi sebelum kurun waktu 10 menit.');
-                                window.location.reload();
+                                this.alertMessage = '⏳ Menunggu pembayaran... Order Code: ' + data.data.order_code;
+                                this.alertType = 'success';
                             },
                             onError: (result) => {
-                                alert('Pembayaran Gagal!');
-                                window.location.reload();
+                                this.alertMessage = '❌ Pembayaran gagal. Silakan coba lagi.';
+                                this.alertType = 'error';
                             },
                             onClose: () => {
-                                alert('Popup ditutup. Kursi tetap terkunci selama 10 menit.');
-                                window.location.reload();
-                            }
+                                this.alertMessage = '⚠️ Jendela pembayaran ditutup. Order masih aktif selama 10 menit.';
+                                this.alertType = 'error';
+                                setTimeout(() => window.location.href = '/my-tickets', 2000);
+                            },
                         });
                     } else {
-                        this.errorMessage = result.message || 'Gagal mengunci kursi.';
+                        // Sandbox mode — show success directly
+                        this.alertMessage = '✅ [SANDBOX] Order berhasil dibuat! Mengalihkan ke tiket Anda...';
+                        this.alertType = 'success';
+                        setTimeout(() => window.location.href = '/orders/' + data.data.order_code + '/ticket', 2000);
                     }
-                } catch (err) {
-                    this.errorMessage = 'Terjadi kesalahan sistem saat menghubungi server.';
-                } finally {
-                    this.isLoading = false;
+                } else {
+                    this.alertMessage = data.message || 'Gagal membuat order.';
+                    this.alertType = 'error';
                 }
+            } catch (err) {
+                this.alertMessage = 'Terjadi kesalahan jaringan. Silakan coba lagi.';
+                this.alertType = 'error';
+            } finally {
+                this.loading = false;
             }
         }
-    }
+    };
+}
 </script>
 @endpush

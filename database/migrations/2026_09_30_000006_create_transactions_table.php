@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
-            $table->string('order_id')->unique();
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->string('order_code')->unique();
             $table->decimal('gross_amount', 12, 2);
             $table->string('payment_type')->nullable();
             $table->string('snap_token')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->dateTime('paid_at')->nullable();
             $table->timestamps();
 
-            $table->index(['order_id', 'transaction_status']);
+            $table->index(['order_code', 'transaction_status']);
         });
     }
 

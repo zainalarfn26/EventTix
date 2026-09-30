@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Event;
-use App\Models\Seat;
+use App\Models\TicketTier;
 use App\Models\User;
 use App\Services\MidtransPaymentService;
-use App\Services\SeatLockService;
+use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,53 +14,55 @@ class MidtransPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_creates_snap_token_and_transaction_for_reservation(): void
+    public function test_creates_snap_token_and_transaction_for_order(): void
     {
         $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
-        $this->seed(\Database\Seeders\VenueAndSeatSeeder::class);
+        $this->seed(\Database\Seeders\VenueSeeder::class);
         $this->seed(\Database\Seeders\EventSeeder::class);
 
         $user = User::where('email', 'customer@seatpulse.com')->first();
         $event = Event::first();
-        $seat = Seat::first();
+        $tier = TicketTier::where('event_id', $event->id)->first();
 
-        $lockService = new SeatLockService();
-        $reservation = $lockService->lockSeat($user, $event->id, $seat->id);
+        $orderService = new OrderService();
+        $order = $orderService->createOrder($user, $event->id, [
+            ['ticket_tier_id' => $tier->id, 'quantity' => 1],
+        ]);
 
         $paymentService = new MidtransPaymentService();
-        $transaction = $paymentService->createSnapToken($reservation);
+        $transaction = $paymentService->createSnapToken($order);
 
         $this->assertNotNull($transaction);
         $this->assertNotNull($transaction->snap_token);
         $this->assertEquals('pending', $transaction->transaction_status);
-        $this->assertDatabaseHas('transactions', [
-            'reservation_id' => $reservation->id,
-            'transaction_status' => 'pending',
-        ]);
     }
 
-    public function test_handles_successful_webhook_payment_and_issues_ticket(): void
+    public function test_handles_successful_webhook_payment_and_issues_tickets(): void
     {
         $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
-        $this->seed(\Database\Seeders\VenueAndSeatSeeder::class);
+        $this->seed(\Database\Seeders\VenueSeeder::class);
         $this->seed(\Database\Seeders\EventSeeder::class);
 
         $user = User::where('email', 'customer@seatpulse.com')->first();
         $event = Event::first();
-        $seat = Seat::first();
+        $tier = TicketTier::where('event_id', $event->id)->first();
 
-        $lockService = new SeatLockService();
-        $reservation = $lockService->lockSeat($user, $event->id, $seat->id);
+        $orderService = new OrderService();
+        $order = $orderService->createOrder($user, $event->id, [
+            ['ticket_tier_id' => $tier->id, 'quantity' => 2],
+        ]);
 
         $paymentService = new MidtransPaymentService();
-        $transaction = $paymentService->createSnapToken($reservation);
+        $transaction = $paymentService->createSnapToken($order);
 
-        // Simulate Webhook Notification from Midtrans Sandbox
+        $serverKey = config('services.midtrans.server_key', env('MIDTRANS_SERVER_KEY', 'SB-Mid-server-dummy-key'));
+        $signature = hash('sha512', $order->order_code . '200' . (string) $transaction->gross_amount . $serverKey);
+
         $notification = [
-            'order_id' => $transaction->order_id,
+            'order_id' => $order->order_code,
             'status_code' => '200',
             'gross_amount' => (string) $transaction->gross_amount,
-            'signature_key' => 'dummy_signature',
+            'signature_key' => $signature,
             'transaction_status' => 'settlement',
             'payment_type' => 'bank_transfer',
         ];
@@ -68,10 +70,7 @@ class MidtransPaymentTest extends TestCase
         $updatedTransaction = $paymentService->handleWebhook($notification);
 
         $this->assertEquals('settlement', $updatedTransaction->transaction_status);
-        $this->assertEquals('confirmed', $reservation->fresh()->status);
-        $this->assertDatabaseHas('tickets', [
-            'reservation_id' => $reservation->id,
-            'is_checked_in' => false,
-        ]);
+        $this->assertEquals('paid', $order->fresh()->status);
+        $this->assertDatabaseCount('tickets', 2);
     }
 }

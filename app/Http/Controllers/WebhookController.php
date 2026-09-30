@@ -25,7 +25,7 @@ class WebhookController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Webhook notification processed successfully.',
-                'order_id' => $transaction->order_id,
+                'order_code' => $transaction->order_code,
                 'status' => $transaction->transaction_status,
             ]);
 

@@ -15,7 +15,7 @@ class ExampleTest extends TestCase
     public function test_the_application_returns_a_successful_response(): void
     {
         $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
-        $this->seed(\Database\Seeders\VenueAndSeatSeeder::class);
+        $this->seed(\Database\Seeders\VenueSeeder::class);
         $this->seed(\Database\Seeders\EventSeeder::class);
 
         $response = $this->get('/');

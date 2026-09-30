@@ -1,124 +1,83 @@
-# 🎟️ SeatPulse - Real-Time Event Ticketing & Seat Reservation System
+# 🚀 EventTix - Festival Event Ticketing & Concurrency Platform
 
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-Mutex_Lock-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Laravel Reverb](https://img.shields.io/badge/WebSockets-Laravel_Reverb-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Midtrans](https://img.shields.io/badge/Midtrans-Payment_Gateway-0099FF?style=for-the-badge&logo=midtrans&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-77C1D2?style=for-the-badge&logo=alpine.js&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![Pest PHP](https://img.shields.io/badge/Testing-Pest_PHP-000000?style=for-the-badge&logo=pest&logoColor=white)
 
-**SeatPulse** adalah platform reservasi tiket konser & event berorientasi *high-concurrency* yang dirancang untuk mengatasi permasalahan **Double-Booking (Race Condition)** saat ribuan pengguna mencoba memesan kursi yang sama secara bersamaan.
+**EventTix** adalah platform penjualan tiket festival & konser spektakuler berorientasi *high-concurrency* yang dirancang untuk mencegah **Overselling / Sold-Out Race Condition** pada pembelian kuota tiket secara bersamaan.
 
 ---
 
-## 🎯 Key Architectural Highlights (Technical Selling Points)
+## 🌟 Fitur Utama & Keunggulan Teknis (Production-Ready)
 
-- **🛡️ Race Condition & Double-Booking Protection:**
-  Menggabungkan **Redis Distributed Mutex (`Cache::lock()`)** dan **Database Pessimistic Locking (`lockForUpdate()`)** untuk menjamin *atomic transaction* pada setiap pemesanan kursi.
-- **⚡ Real-Time WebSockets Integration (Laravel Reverb):**
-  Perubahan status kursi (`Available` ➔ `Locked` ➔ `Booked`) disiarkan secara instant tanpa reload halaman ke semua pengguna yang sedang berada di layar venue.
-- **⏱️ Automated Seat Hold Expiration:**
-  Kursi dikunci secara temporary selama **10 menit**. Jika pembayaran tidak diselesaikan, **Laravel Queue Worker** melepaskan kembali kursi ke pool publik.
-- **💳 Midtrans Payment Gateway Integration:**
-  Handling webhook pembayaran (`settlement`, `expire`, `cancel`, `deny`) dilengkapi dengan verifikasi **SHA512 Signature Key** & logika **Idempotency**.
-- **📲 E-Ticket QR Code Generator & Gate Check-in:**
-  Tiket terkonfirmasi dikirimkan otomatis dalam format PDF ber-QR Code via **Email Queue**, dilengkapi interface **Gate Scanner** untuk panitia mengabsahkan kedatangan pengunjung.
-- **🧪 Comprehensive Automated Concurrency Testing:**
-  Dilengkapi unit & feature tests menggunakan **Pest PHP** yang mensimulasikan request concurrent paralel.
+1. **🎨 Rebranding & Single-Tab Streamlined Flow:**
+   - Navigasi mulus dalam satu tab tanpa window bertele-tele (`target="_blank"`), langsung dari Katalog ➔ Checkout ➔ QR Code E-Ticket.
+2. **💳 Integrasi Midtrans Payment & Revive Payment:**
+   - Tombol **💳 Bayar Sekarang** pada menu "Tiket Saya" jika pop-up checkout tertutup secara tidak sengaja.
+   - **Live Digital Countdown Timer** berbasis Alpine.js yang menghitung mundur 10 menit kuota reserve.
+   - **Auto-Cancel & Kuota Refund Engine:** Background job otomatis membatalkan pesanan yang kadaluwarsa & mengembalikan sisa tiket ke kuota publik.
+3. **📸 Gate Scanner Kamera Langsung (`html5-qrcode`):**
+   - Petugas/Panitia dapat melakukan scan QR Code secara instan menggunakan kamera *smartphone* atau *laptop* via koneksi AJAX real-time.
+4. **🎟️ E-Ticket Anti-Fraud & Watermark "TERPAKAI":**
+   - E-Ticket menggunakan kode rapi (Contoh: `TKT-SP-XYZ123`).
+   - Begitu tiket terpakai di gate, QR Code otomatis berubah menjadi redup (grayscale) dengan watermark raksasa **✅ TERPAKAI** untuk mencegah penipuan *double scan*.
+5. **🔐 Role-Based Access Control (RBAC):**
+   - **Admin:** Akses penuh analitik gross revenue, manajemen event, & gate scanner.
+   - **Organizer:** Akses khusus Gate Scanner & riwayat check-in penonton.
+   - **Customer:** Akses catalog, pemesanan tiket, & riwayat "Tiket Saya".
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture Flowchart
 
 ```mermaid
 flowchart TD
-    User A[User A - Browser] -->|1. Select Seat A1| LockService[SeatLockService]
-    User B[User B - Browser] -->|1. Select Seat A1 concurrently| LockService
+    User[Pelanggan EventTix] -->|1. Pilih Event & Kategori Tiket| OrderService[OrderService & Concurrency Protection]
+    OrderService -->|2. Atomic DB Lock & Deduct Quota| DB[(Database MySQL/SQLite)]
+    DB -->|3. Create Pending Order| OrderTable[Orders Table - 10 Min Reserve]
+    
+    OrderTable -->|4. Dispatch Expiration Job| QueueWorker[Laravel Queue Worker]
+    QueueWorker -->|If Unpaid in 10 Mins| Release[Cancel Order & Refund Quota]
 
-    LockService -->|2. Redis Mutex Lock| Redis[(Redis Cache)]
-    Redis -->|Allowed| DB[MySQL Database Pessimistic Lock]
-    Redis -->|Denied| Error[User B: Seat Currently Locked]
-
-    DB -->|3. Create Pending Reservation| ResTable[Reservations Table]
-    ResTable -->|4. Broadcast Event| Reverb[Laravel Reverb WebSockets]
-    Reverb -->|5. Update Seat Color to Yellow| User A & User B
-
-    ResTable -->|6. Dispatch 10-Min Expiration Job| Queue[Laravel Queue Worker]
-    User A -->|7. Pay via Snap| Midtrans[Midtrans Payment Gateway]
-    Midtrans -->|8. Webhook Notification| Webhook[Payment Webhook Handler]
-    Webhook -->|9. Settlement Confirmed| TicketGen[QR Ticket Generator & Email Queue]
+    User -->|5. Checkout via Midtrans Snap| Midtrans[Midtrans Payment Sandbox]
+    Midtrans -->|6. Payment Settlement Webhook| Webhook[Webhook Notification Handler]
+    Webhook -->|7. Mark Order Confirmed| IssueTicket[Issue Unique QR Code E-Tickets]
+    
+    GateStaff[Panitia Gate Scanner] -->|8. Scan QR Code via Kamera Smartphone| Scanner[Gate Scanner AJAX]
+    Scanner -->|9. Validate & Mark Checked-in| Watermark[Apply Watermark TERPAKAI]
 ```
 
 ---
 
-## 🗄️ Database Entity Relationship Diagram (ERD)
+## 🧪 Automated Test Suite (100% Green Pass)
 
-- **`venues`**: Menyimpan data venue & denah (rows, columns, categories).
-- **`events`**: Data event, tanggal, venue, & daftar harga tiket.
-- **`seats`**: Data nomor kursi (row, col, category).
-- **`reservations`**: Status kunci temporary (`pending`, `confirmed`, `expired`, `cancelled`, `expires_at`).
-- **`transactions`**: Log pembayaran Midtrans (`order_id`, `snap_token`, `gross_amount`, `payment_status`).
-- **`tickets`**: E-ticket unik (`ticket_code`, QR Hash, `checked_in_at`).
+- `test_user_can_successfully_order_ticket_and_reserve_quota`
+- `test_prevents_overselling_when_quota_is_insufficient`
+- `test_creates_snap_token_and_transaction_for_order`
+- `test_handles_successful_webhook_payment_and_issues_tickets`
+- `test_gate_scanner_validates_and_checks_in_ticket`
+- `test_admin_can_access_dashboard_and_see_analytics`
 
 ---
 
-## 🚀 Installation & Local Development Setup
+## 🚀 Cara Menjalankan Lokal
 
-### Requirements
-- PHP >= 8.2
-- Composer 2.x
-- Node.js >= 20.x
-- MySQL / PostgreSQL
-- Redis Server (or Memcached/Database fallback for testing)
-
-### Setup Steps
 ```bash
-# 1. Clone repository
-git clone https://github.com/username/seatpulse.git
-cd seatpulse
+# 1. Migration & Seeder Database
+php artisan migrate:fresh --seed
 
-# 2. Install PHP & Node dependencies
-composer install
-npm install
-
-# 3. Setup environment configuration
-cp .env.example .env
-php artisan key:generate
-
-# 4. Configure Database & Redis in .env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=seatpulse
-DB_USERNAME=root
-DB_PASSWORD=
-
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-
-# 5. Run Database Migrations & Seeders
-php artisan migrate --seed
-
-# 6. Run Reverb WebSocket Server & Queue Worker
-php artisan reverb:start
+# 2. Jalankan Queue Worker (Background Auto-Cancel)
 php artisan queue:work
 
-# 7. Start Vite & Local Laravel Development Server
-npm run dev
+# 3. Jalankan Local Server
 php artisan serve
 ```
 
----
-
-## 🧪 Running Automated Tests
-
-```bash
-# Run Pest test suite
-php artisan test
-
-# Run specific concurrency feature test
-php artisan test --filter=SeatConcurrencyTest
-```
+Akses aplikasi di: `http://127.0.0.1:8000`  
+Halaman Login: `http://127.0.0.1:8000/login`
 
 ---
 

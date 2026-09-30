@@ -5,26 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Reservation extends Model
+class Order extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'event_id',
-        'seat_id',
-        'status',
-        'price',
-        'locked_at',
-        'expires_at',
+        'user_id', 'event_id', 'order_code',
+        'total_amount', 'status', 'expires_at', 'paid_at',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'locked_at' => 'datetime',
+        'total_amount' => 'decimal:2',
         'expires_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -37,9 +33,9 @@ class Reservation extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function seat(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(Seat::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function transaction(): HasOne
@@ -47,8 +43,13 @@ class Reservation extends Model
         return $this->hasOne(Transaction::class);
     }
 
-    public function ticket(): HasOne
+    public function tickets(): HasMany
     {
-        return $this->hasOne(Ticket::class);
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->status === 'pending' && now()->greaterThanOrEqualTo($this->expires_at);
     }
 }

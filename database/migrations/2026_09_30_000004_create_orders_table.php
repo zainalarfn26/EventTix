@@ -11,19 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reservations', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('seat_id')->constrained()->cascadeOnDelete();
-            $table->enum('status', ['pending', 'confirmed', 'expired', 'cancelled'])->default('pending');
-            $table->decimal('price', 12, 2);
-            $table->dateTime('locked_at');
+            $table->string('order_code')->unique();
+            $table->decimal('total_amount', 12, 2);
+            $table->enum('status', ['pending', 'paid', 'expired', 'cancelled'])->default('pending');
             $table->dateTime('expires_at');
+            $table->dateTime('paid_at')->nullable();
             $table->timestamps();
 
-            // Crucial performance indexes for lock queries
-            $table->index(['event_id', 'seat_id', 'status']);
             $table->index(['user_id', 'status']);
             $table->index(['status', 'expires_at']);
         });
@@ -34,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reservations');
+        Schema::dropIfExists('orders');
     }
 };

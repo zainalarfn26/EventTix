@@ -49,8 +49,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function reservations(): HasMany
+    public function orders(): HasMany
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(Order::class);
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
     }
 }

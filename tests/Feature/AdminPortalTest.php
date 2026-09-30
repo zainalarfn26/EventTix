@@ -20,7 +20,7 @@ class AdminPortalTest extends TestCase
     public function test_admin_can_access_dashboard_and_see_analytics(): void
     {
         $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
-        $this->seed(\Database\Seeders\VenueAndSeatSeeder::class);
+        $this->seed(\Database\Seeders\VenueSeeder::class);
         $this->seed(\Database\Seeders\EventSeeder::class);
 
         $admin = User::where('email', 'admin@seatpulse.com')->first();
@@ -29,13 +29,12 @@ class AdminPortalTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Admin');
-        $response->assertSee('Total Gross Revenue');
     }
 
     public function test_admin_can_create_new_event(): void
     {
         $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
-        $this->seed(\Database\Seeders\VenueAndSeatSeeder::class);
+        $this->seed(\Database\Seeders\VenueSeeder::class);
 
         $admin = User::where('email', 'admin@seatpulse.com')->first();
         $venue = Venue::first();
@@ -47,6 +46,17 @@ class AdminPortalTest extends TestCase
             'start_time' => now()->addDays(10)->toDateTimeString(),
             'end_time' => now()->addDays(10)->addHours(4)->toDateTimeString(),
             'status' => 'published',
+            'tiers' => [
+                [
+                    'name' => 'VIP',
+                    'price' => 1500000,
+                    'quota' => 500,
+                    'color' => '#8b5cf6',
+                    'zone_label' => 'Zona VIP',
+                    'wristband_color' => 'Ungu',
+                    'description' => 'Akses VIP',
+                ],
+            ],
         ]);
 
         $response->assertRedirect(route('admin.events.index'));

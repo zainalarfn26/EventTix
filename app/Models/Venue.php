@@ -15,20 +15,11 @@ class Venue extends Model
         'city',
         'address',
         'capacity',
-        'layout_config',
-    ];
-
-    protected $casts = [
-        'layout_config' => 'array',
+        'layout_image',
     ];
 
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
-    }
-
-    public function seats(): HasMany
-    {
-        return $this->hasMany(Seat::class);
     }
 }

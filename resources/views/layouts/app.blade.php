@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'SeatPulse - Real-Time Event Ticketing')</title>
+    <title>@yield('title', 'EventTix - Real-Time Event Ticketing')</title>
 
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,14 +28,18 @@
 
             <div class="flex items-center gap-4">
                 <a href="{{ route('events.index') }}" class="text-sm font-medium hover:text-indigo-400 transition">Jadwal Event</a>
-                <a href="{{ route('scanner.index') }}" class="text-sm font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-600 transition">
-                    📱 Gate Scanner
-                </a>
 
                 @auth
                     @if(auth()->user()->hasAnyRole(['admin', 'organizer']))
+                        <a href="{{ route('scanner.index') }}" class="text-sm font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-600 transition mr-2">
+                            📱 Gate Scanner
+                        </a>
                         <a href="{{ route('admin.dashboard') }}" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition">
                             👑 Admin Panel
+                        </a>
+                    @else
+                        <a href="{{ route('user.orders.index') }}" class="text-sm font-bold text-emerald-400 hover:text-emerald-300 transition mr-2">
+                            🎫 Tiket Saya
                         </a>
                     @endif
 
@@ -62,7 +66,7 @@
 
     <!-- Footer -->
     <footer class="bg-slate-800/40 border-t border-slate-800 text-center py-6 text-slate-500 text-sm">
-        <p>© {{ date('Y') }} SeatPulse Ticketing Platform. Built for High-Concurrency & Production Enterprise Usage.</p>
+        <p>© {{ date('Y') }} EventTix Ticketing Platform. Built for High-Concurrency & Production Enterprise Usage.</p>
     </footer>
 
     @stack('scripts')
