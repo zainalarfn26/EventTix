@@ -31,6 +31,26 @@
                 <a href="{{ route('scanner.index') }}" class="text-sm font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-600 transition">
                     📱 Gate Scanner
                 </a>
+
+                @auth
+                    @if(auth()->user()->hasAnyRole(['admin', 'organizer']))
+                        <a href="{{ route('admin.dashboard') }}" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition">
+                            👑 Admin Panel
+                        </a>
+                    @endif
+
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-slate-300 font-semibold">👤 {{ auth()->user()->name }}</span>
+                        <form action="{{ route('logout') }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="text-slate-400 hover:text-rose-400 font-bold underline">Logout</button>
+                        </form>
+                    </div>
+                @else
+                    <a href="{{ route('login') }}" class="text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-1.5 rounded-lg border border-slate-600 transition">
+                        🔑 Login
+                    </a>
+                @endauth
             </div>
         </div>
     </nav>
@@ -42,7 +62,7 @@
 
     <!-- Footer -->
     <footer class="bg-slate-800/40 border-t border-slate-800 text-center py-6 text-slate-500 text-sm">
-        <p>© {{ date('Y') }} SeatPulse Ticketing Platform. Built for High-Concurrency & Real-Time Performance.</p>
+        <p>© {{ date('Y') }} SeatPulse Ticketing Platform. Built for High-Concurrency & Production Enterprise Usage.</p>
     </footer>
 
     @stack('scripts')
