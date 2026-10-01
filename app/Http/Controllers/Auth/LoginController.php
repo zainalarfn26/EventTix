@@ -47,8 +47,12 @@ class LoginController extends Controller
 
     protected function redirectUser($user)
     {
-        if ($user->hasAnyRole(['admin', 'organizer'])) {
+        if ($user->hasRole('admin')) {
             return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->hasRole('organizer')) {
+            return redirect()->route('scanner.index');
         }
 
         return redirect()->route('events.index');

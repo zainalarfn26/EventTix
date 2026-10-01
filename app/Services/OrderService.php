@@ -25,11 +25,11 @@ class OrderService
      * @return Order
      * @throws TicketSoldOutException
      */
-    public function createOrder(User $user, int $eventId, array $items, int $holdDurationMinutes = 10): Order
+    public function createOrder(User $user, int $eventId, array $items, int $holdDurationMinutes = 10, ?string $promoCode = null): Order
     {
-        return DB::transaction(function () use ($user, $eventId, $items, $holdDurationMinutes) {
+        return DB::transaction(function () use ($user, $eventId, $items, $holdDurationMinutes, $promoCode) {
             $orderCode = 'SP-' . strtoupper(Str::random(10));
-            $totalAmount = 0;
+            $subTotalAmount = 0;
             $orderItems = [];
 
             foreach ($items as $item) {
@@ -53,7 +53,7 @@ class OrderService
                 $tier->increment('sold_count', $quantity);
 
                 $subtotal = $tier->price * $quantity;
-                $totalAmount += $subtotal;
+                $subTotalAmount += $subtotal;
 
                 $orderItems[] = [
                     'ticket_tier_id' => $tier->id,
@@ -63,6 +63,18 @@ class OrderService
                 ];
             }
 
+            $discountAmount = 0;
+            if ($promoCode) {
+                $promo = \App\Models\Promo::where('code', $promoCode)->lockForUpdate()->first();
+                if ($promo && $promo->isValid()) {
+                    $discountAmount = $promo->calculateDiscount($subTotalAmount);
+                    $promo->increment('current_usages');
+                } else {
+                    $promoCode = null; // invalid promo code
+                }
+            }
+
+            $totalAmount = max(0, $subTotalAmount - $discountAmount);
             $expiresAt = now()->addMinutes($holdDurationMinutes);
 
             $order = Order::create([
@@ -70,6 +82,8 @@ class OrderService
                 'event_id' => $eventId,
                 'order_code' => $orderCode,
                 'total_amount' => $totalAmount,
+                'discount_amount' => $discountAmount,
+                'promo_code' => $promoCode,
                 'status' => 'pending',
                 'expires_at' => $expiresAt,
             ]);

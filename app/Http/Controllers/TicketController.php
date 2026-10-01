@@ -79,4 +79,34 @@ class TicketController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Get recent scan history for the current organizer/admin.
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $history = Ticket::with(['event', 'ticketTier', 'user'])
+            ->whereNotNull('checked_in_at')
+            ->where('checked_in_by', $request->user()->id)
+            ->orderBy('checked_in_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($ticket) {
+                return [
+                    'id' => $ticket->id,
+                    'code' => $ticket->ticket_code,
+                    'tier' => $ticket->ticketTier->name,
+                    'tier_color' => $ticket->ticketTier->color,
+                    'wristband_color' => $ticket->ticketTier->wristband_color ?? $ticket->ticketTier->name,
+                    'event' => $ticket->event->title,
+                    'customer' => $ticket->user->name ?? '',
+                    'scanned_at' => $ticket->checked_in_at->diffForHumans(),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $history,
+        ]);
+    }
 }

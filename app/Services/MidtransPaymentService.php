@@ -26,6 +26,113 @@ class MidtransPaymentService
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
     }
 
+    public function createCoreApiTransaction(Order $order, string $paymentType, ?string $bank = null): Transaction
+    {
+        return DB::transaction(function () use ($order, $paymentType, $bank) {
+            $existingTransaction = Transaction::where('order_id', $order->id)
+                ->where('transaction_status', 'pending')
+                ->first();
+
+            if ($existingTransaction) {
+                return $existingTransaction; // Might need to recreate if they change payment method, but for now we keep it simple.
+            }
+
+            $order->load('items.ticketTier', 'user', 'event');
+            $grossAmount = (int) $order->total_amount;
+            
+            $itemDetails = [];
+            foreach ($order->items as $item) {
+                $itemDetails[] = [
+                    'id' => 'TIER-' . $item->ticket_tier_id,
+                    'price' => (int) $item->unit_price,
+                    'quantity' => $item->quantity,
+                    'name' => substr("{$item->ticketTier->name} - {$order->event->title}", 0, 50),
+                ];
+            }
+
+            if ($order->discount_amount > 0) {
+                $itemDetails[] = [
+                    'id' => 'PROMO-' . ($order->promo_code ?? 'DISCOUNT'),
+                    'price' => -(int) $order->discount_amount,
+                    'quantity' => 1,
+                    'name' => substr("Discount Promo " . ($order->promo_code ?? ''), 0, 50),
+                ];
+            }
+
+            $payload = [
+                'payment_type' => $paymentType === 'va' ? 'bank_transfer' : $paymentType,
+                'transaction_details' => [
+                    'order_id' => $order->order_code,
+                    'gross_amount' => $grossAmount,
+                ],
+                'customer_details' => [
+                    'first_name' => $order->user->name ?? 'Customer',
+                    'email' => $order->user->email ?? 'customer@example.com',
+                ],
+                'item_details' => $itemDetails,
+            ];
+
+            if ($paymentType === 'va' && $bank) {
+                $payload['bank_transfer'] = [
+                    'bank' => $bank,
+                ];
+            }
+
+            $coreApiUrl = $this->isProduction
+                ? 'https://api.midtrans.com/v2/charge'
+                : 'https://api.sandbox.midtrans.com/v2/charge';
+
+            $rawPayloadResponse = null;
+
+            if (!str_contains($this->serverKey, 'dummy')) {
+                $response = Http::withBasicAuth($this->serverKey, '')
+                    ->acceptJson()
+                    ->post($coreApiUrl, $payload);
+
+                if ($response->successful()) {
+                    $rawPayloadResponse = $response->json();
+                } else {
+                    throw new \Exception('Midtrans Error: ' . $response->body());
+                }
+            } else {
+                // Sandbox dummy response
+                $rawPayloadResponse = [
+                    'status_code' => '201',
+                    'transaction_status' => 'pending',
+                    'payment_type' => $paymentType === 'va' ? 'bank_transfer' : $paymentType,
+                ];
+
+                if ($paymentType === 'va') {
+                    $rawPayloadResponse['va_numbers'] = [
+                        [
+                            'bank' => $bank,
+                            'va_number' => '1234567890123'
+                        ]
+                    ];
+                } else if ($paymentType === 'qris') {
+                    $rawPayloadResponse['actions'] = [
+                        [
+                            'name' => 'generate-qr-code',
+                            'method' => 'GET',
+                            'url' => 'https://api.sandbox.midtrans.com/v2/qris/dummy.png'
+                        ]
+                    ];
+                }
+            }
+
+            $transaction = Transaction::create([
+                'order_id' => $order->id,
+                'order_code' => $order->order_code,
+                'gross_amount' => $grossAmount,
+                'payment_type' => $paymentType === 'va' ? $bank : $paymentType,
+                'transaction_status' => 'pending',
+                'raw_payload' => $rawPayloadResponse,
+            ]);
+
+            return $transaction;
+        });
+    }
+
     /**
      * Create Midtrans Snap Token for an order.
      */
@@ -51,6 +158,15 @@ class MidtransPaymentService
                     'price' => (int) $item->unit_price,
                     'quantity' => $item->quantity,
                     'name' => substr("{$item->ticketTier->name} - {$order->event->title}", 0, 50),
+                ];
+            }
+
+            if ($order->discount_amount > 0) {
+                $itemDetails[] = [
+                    'id' => 'PROMO-' . ($order->promo_code ?? 'DISCOUNT'),
+                    'price' => -(int) $order->discount_amount,
+                    'quantity' => 1,
+                    'name' => substr("Discount Promo " . ($order->promo_code ?? ''), 0, 50),
                 ];
             }
 

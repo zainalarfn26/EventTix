@@ -13,12 +13,13 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'event_id', 'order_code',
-        'total_amount', 'status', 'expires_at', 'paid_at',
+        'user_id', 'event_id', 'order_code', 'promo_code',
+        'total_amount', 'discount_amount', 'status', 'expires_at', 'paid_at',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'expires_at' => 'datetime',
         'paid_at' => 'datetime',
     ];

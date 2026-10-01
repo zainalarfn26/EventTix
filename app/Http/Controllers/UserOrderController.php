@@ -35,4 +35,32 @@ class UserOrderController extends Controller
         // Fallback to order list if ticket is not generated yet
         return redirect()->route('user.orders.index')->with('success', 'Pesanan Anda berhasil diproses.');
     }
+
+    public function paymentSelection(string $orderCode)
+    {
+        $order = \App\Models\Order::with(['event', 'items.ticketTier'])->where('order_code', $orderCode)->firstOrFail();
+        
+        if ($order->status !== 'pending') {
+            return redirect()->route('user.orders.index');
+        }
+
+        // If there's already a transaction, check if it's pending. If it is, redirect to instruction page.
+        $transaction = \App\Models\Transaction::where('order_id', $order->id)->where('transaction_status', 'pending')->first();
+        if ($transaction) {
+            return redirect()->route('user.orders.instruction', $orderCode);
+        }
+
+        return view('user.orders.payment_selection', compact('order'));
+    }
+
+    public function paymentInstruction(string $orderCode)
+    {
+        $order = \App\Models\Order::where('order_code', $orderCode)->firstOrFail();
+        
+        $transaction = \App\Models\Transaction::where('order_id', $order->id)
+            ->where('transaction_status', 'pending')
+            ->firstOrFail();
+
+        return view('user.orders.payment_instruction', compact('order', 'transaction'));
+    }
 }

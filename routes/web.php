@@ -22,9 +22,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::post('/api/orders/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
 Route::post('/api/orders/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 Route::post('/api/orders/verify', [OrderController::class, 'verify'])->name('orders.verify');
+Route::post('/api/orders/apply-promo', [OrderController::class, 'applyPromo'])->name('orders.apply_promo');
 
 // Midtrans Webhook Notification Endpoint
 Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransWebhook'])->name('webhooks.midtrans');
+Route::post('/api/midtrans/callback', [WebhookController::class, 'handleMidtransWebhook']); // Alias for the user's Midtrans dashboard config
 
 // E-Ticket Viewer
 Route::get('/tickets/{ticket:ticket_code}', [TicketController::class, 'show'])->name('tickets.show');
@@ -32,8 +34,13 @@ Route::get('/tickets/{ticket:ticket_code}', [TicketController::class, 'show'])->
 // User Dashboard (Protected)
 Route::middleware(['auth'])->group(function () {
     Route::get('/my-tickets', [App\Http\Controllers\UserOrderController::class, 'index'])->name('user.orders.index');
+    Route::get('/orders/{order_code}/payment', [App\Http\Controllers\UserOrderController::class, 'paymentSelection'])->name('user.orders.payment');
+    Route::get('/orders/{order_code}/instruction', [App\Http\Controllers\UserOrderController::class, 'paymentInstruction'])->name('user.orders.instruction');
     Route::get('/orders/{order_code}/ticket', [App\Http\Controllers\UserOrderController::class, 'redirectToTicket'])->name('orders.redirect_ticket');
 });
+
+Route::post('/api/orders/{order_code}/charge', [App\Http\Controllers\OrderController::class, 'chargePayment'])->name('orders.charge')->middleware('auth');
+Route::get('/api/orders/{order_code}/status', [App\Http\Controllers\OrderController::class, 'checkStatus'])->name('orders.status')->middleware('auth');
 
 // Admin & Organizer Portal (Protected by Spatie Role Middleware)
 Route::middleware(['auth', 'role:admin|organizer'])->prefix('admin')->name('admin.')->group(function () {
@@ -48,4 +55,5 @@ Route::middleware(['auth', 'role:admin|organizer'])->prefix('admin')->name('admi
 Route::middleware(['auth', 'role:admin|organizer'])->group(function () {
     Route::get('/scanner', [TicketController::class, 'scanner'])->name('scanner.index');
     Route::post('/api/tickets/scan', [TicketController::class, 'scan'])->name('tickets.scan');
+    Route::get('/api/tickets/history', [TicketController::class, 'history'])->name('tickets.history');
 });

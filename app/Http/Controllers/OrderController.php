@@ -26,6 +26,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'event_id' => 'required|exists:events,id',
+            'promo_code' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.ticket_tier_id' => 'required|exists:ticket_tiers,id',
             'items.*.quantity' => 'required|integer|min:1|max:5',
@@ -44,26 +45,17 @@ class OrderController extends Controller
             $order = $this->orderService->createOrder(
                 $user,
                 (int) $validated['event_id'],
-                $validated['items']
+                $validated['items'],
+                10,
+                $validated['promo_code'] ?? null
             );
-
-            $transaction = $this->paymentService->createSnapToken($order);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order berhasil dibuat. Selesaikan pembayaran dalam 10 menit.',
+                'message' => 'Order berhasil dibuat. Pilih metode pembayaran.',
                 'data' => [
-                    'order_id' => $order->id,
                     'order_code' => $order->order_code,
-                    'total_amount' => $order->total_amount,
-                    'expires_at' => $order->expires_at->toIso8601String(),
-                    'snap_token' => $transaction->snap_token,
-                    'items' => $order->items->map(fn($item) => [
-                        'tier' => $item->ticketTier->name,
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->unit_price,
-                        'subtotal' => $item->subtotal,
-                    ]),
+                    'redirect_url' => route('user.orders.payment', $order->order_code),
                 ],
             ]);
 
@@ -106,9 +98,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Verify payment status manually (useful for localhost testing without webhooks).
-     */
     public function verify(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -129,5 +118,99 @@ class OrderController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Verify and apply a promo code.
+     */
+    public function applyPromo(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'promo_code' => 'required|string',
+            'subtotal' => 'required|numeric|min:0',
+        ]);
+
+        $promo = \App\Models\Promo::where('code', $validated['promo_code'])->first();
+
+        if (!$promo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode promo tidak ditemukan.',
+            ], 404);
+        }
+
+        if (!$promo->isValid()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode promo sudah tidak berlaku atau kuota habis.',
+            ], 400);
+        }
+
+        $discount = $promo->calculateDiscount($validated['subtotal']);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'discount_amount' => $discount,
+                'promo_code' => $promo->code,
+                'final_total' => max(0, $validated['subtotal'] - $discount),
+            ],
+            'message' => 'Kode promo berhasil digunakan!',
+        ]);
+    }
+
+    public function chargePayment(Request $request, string $orderCode): JsonResponse
+    {
+        $validated = $request->validate([
+            'payment_type' => 'required|string',
+            'bank' => 'nullable|string',
+        ]);
+
+        $order = \App\Models\Order::where('order_code', $orderCode)
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        // If there is already a transaction, just return it
+        $transaction = \App\Models\Transaction::where('order_id', $order->id)->where('transaction_status', 'pending')->first();
+
+        if (!$transaction) {
+            try {
+                $transaction = $this->paymentService->createCoreApiTransaction($order, $validated['payment_type'], $validated['bank']);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memproses pembayaran: ' . $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'redirect_url' => route('user.orders.instruction', $orderCode),
+            ],
+        ]);
+    }
+    public function checkStatus(Request $request, string $orderCode): JsonResponse
+    {
+        $order = \App\Models\Order::where('order_code', $orderCode)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        // Proactively check Midtrans Server for status if it's still pending in DB
+        // This acts as a reliable fallback if webhooks are delayed or cannot reach localhost.
+        if ($order->status === 'pending') {
+            try {
+                $this->paymentService->verifyOrder($orderCode);
+                $order->refresh();
+            } catch (\Exception $e) {
+                // Ignore network errors, fallback to existing DB status
+            }
+        }
+
+        return response()->json([
+            'status' => $order->status,
+        ]);
     }
 }
