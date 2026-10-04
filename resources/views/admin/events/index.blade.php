@@ -4,25 +4,35 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Kelola Event</h1>
-        <a href="{{ route('admin.events.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition shadow-sm">
+        <a href="{{ route('admin.events.create') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition shadow-sm text-center">
             + Buat Event Baru
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 p-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-medium">
-            {{ session('success') }}
-        </div>
-    @endif
+    {{-- Filters --}}
+    <form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row gap-3">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari judul event..."
+               class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        <select name="status" class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="this.form.submit()">
+            <option value="">Semua Status</option>
+            @foreach(['draft', 'published', 'completed', 'cancelled'] as $st)
+                <option value="{{ $st }}" {{ request('status') === $st ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+            @endforeach
+        </select>
+        <button type="submit" class="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
+        @if(request()->hasAny(['q', 'status']))
+            <a href="{{ route('admin.events.index') }}" class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 text-center">Reset</a>
+        @endif
+    </form>
 
     <div class="space-y-4">
         @forelse($events as $event)
             <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition shadow-sm">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-3 mb-2">
                             <h2 class="text-lg font-bold text-gray-900">{{ $event->title }}</h2>
                             <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
                                 @if($event->status === 'published') bg-emerald-100 text-emerald-700
@@ -32,7 +42,7 @@
                                 {{ strtoupper($event->status) }}
                             </span>
                         </div>
-                        <p class="text-sm text-gray-500 flex items-center gap-4">
+                        <p class="text-sm text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-1">
                             <span class="flex items-center gap-1">
                                 <svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
                                 {{ $event->venue->name ?? '-' }}
@@ -45,13 +55,13 @@
                                 <svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 {{ $event->start_time->format('H:i') }} WIB
                             </span>
+                            <span class="flex items-center gap-1 text-gray-600 font-medium">🎫 {{ $event->active_tickets_count }} tiket terjual</span>
                         </p>
 
-                        {{-- Ticket Tiers Summary --}}
                         @if($event->ticketTiers->isNotEmpty())
                             <div class="mt-3 flex flex-wrap gap-2">
                                 @foreach($event->ticketTiers as $tier)
-                                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-semibold"
+                                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-semibold {{ $tier->is_active ? '' : 'opacity-50' }}"
                                          style="border-color: {{ $tier->color }}40; background-color: {{ $tier->color }}08; color: {{ $tier->color }}">
                                         <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $tier->color }}"></div>
                                         {{ $tier->name }}:
@@ -63,17 +73,25 @@
                         @endif
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('events.show', $event->slug) }}"
-                           class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition">
-                            Lihat
-                        </a>
+                    <div class="flex flex-wrap items-center gap-2">
+                        {{-- Quick status change --}}
+                        <form action="{{ route('admin.events.status', $event) }}" method="POST">
+                            @csrf @method('PATCH')
+                            @if($event->status === 'published')
+                                <input type="hidden" name="status" value="draft">
+                                <button type="submit" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-lg transition border border-amber-200">Unpublish</button>
+                            @elseif($event->status === 'draft')
+                                <input type="hidden" name="status" value="published">
+                                <button type="submit" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition border border-emerald-200">Publish</button>
+                            @endif
+                        </form>
+                        <a href="{{ route('events.show', $event->slug) }}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition">Lihat</a>
+                        <a href="{{ route('admin.reports.show', $event) }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition border border-blue-100">Laporan</a>
+                        <a href="{{ route('admin.events.edit', $event) }}" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg transition border border-indigo-100">Edit</a>
                         <form action="{{ route('admin.events.destroy', $event) }}" method="POST"
-                              onsubmit="return confirm('Yakin ingin menghapus event ini?')">
+                              data-confirm="Event &quot;{{ $event->title }}&quot; beserta kelas tiketnya akan dihapus permanen." data-confirm-title="Hapus event?" data-confirm-button="Ya, hapus">
                             @csrf @method('DELETE')
-                            <button type="submit" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition border border-red-200">
-                                Hapus
-                            </button>
+                            <button type="submit" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition border border-red-200">Hapus</button>
                         </form>
                     </div>
                 </div>
@@ -83,7 +101,7 @@
                 <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </div>
-                Belum ada event. Buat event baru sekarang!
+                {{ request()->hasAny(['q', 'status']) ? 'Tidak ada event yang cocok dengan pencarian.' : 'Belum ada event. Buat event baru sekarang!' }}
             </div>
         @endforelse
     </div>

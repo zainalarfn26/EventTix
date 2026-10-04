@@ -3,120 +3,166 @@
 @section('title', 'Dashboard - EventTix')
 
 @section('content')
+@php $isAdmin = auth()->user()->hasRole('admin'); @endphp
 <div class="max-w-7xl mx-auto">
-    <div class="mb-8 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p class="text-sm text-gray-500 mt-1">Halo, {{ auth()->user()->name }} 👋 — ringkasan aktivitas EventTix hari ini.</p>
+        </div>
+        @if($isAdmin)
+        <div class="flex gap-2">
+            <a href="{{ route('admin.events.create') }}" class="text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">+ Event Baru</a>
+            <a href="{{ route('admin.reports.index') }}" class="text-sm font-semibold bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Lihat Laporan</a>
+        </div>
+        @endif
     </div>
 
     {{-- Stats Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-[#EBF5FF] rounded-2xl p-6 shadow-sm border border-blue-100 flex flex-col justify-center">
+        <a href="{{ $isAdmin ? route('admin.finances.index') : '#' }}" class="bg-[#EBF5FF] rounded-2xl p-6 shadow-sm border border-blue-100 flex flex-col justify-center hover:shadow-md transition">
             <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl">💰</span>
                 <h3 class="text-sm font-semibold text-gray-700">Total Revenue</h3>
             </div>
             <p class="text-3xl font-bold text-gray-900">Rp{{ number_format($totalRevenue, 0, ',', '.') }}</p>
-        </div>
-        
-        <div class="bg-[#E6FFFA] rounded-2xl p-6 shadow-sm border border-teal-100 flex flex-col justify-center">
+            @if($isAdmin && $pendingOrdersCount > 0)
+                <p class="text-xs text-blue-600 mt-2 font-medium">{{ $pendingOrdersCount }} order menunggu pembayaran</p>
+            @endif
+        </a>
+
+        <a href="{{ $isAdmin ? route('admin.events.index') : '#' }}" class="bg-[#E6FFFA] rounded-2xl p-6 shadow-sm border border-teal-100 flex flex-col justify-center hover:shadow-md transition">
             <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl">📅</span>
-                <h3 class="text-sm font-semibold text-gray-700">Active Events</h3>
+                <h3 class="text-sm font-semibold text-gray-700">Total Events</h3>
             </div>
             <p class="text-3xl font-bold text-gray-900">{{ $totalEventsCount }}</p>
-        </div>
+        </a>
 
-        <div class="bg-[#FFF5F5] rounded-2xl p-6 shadow-sm border border-red-100 flex flex-col justify-center">
+        <a href="{{ $isAdmin ? route('admin.tickets.index') : '#' }}" class="bg-[#FFF5F5] rounded-2xl p-6 shadow-sm border border-red-100 flex flex-col justify-center hover:shadow-md transition">
             <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl">🎫</span>
                 <h3 class="text-sm font-semibold text-gray-700">Tickets Sold</h3>
             </div>
             <p class="text-3xl font-bold text-gray-900">{{ number_format($totalTicketsSold) }}</p>
-        </div>
+        </a>
 
-        <div class="bg-[#FFFAF0] rounded-2xl p-6 shadow-sm border border-orange-100 flex flex-col justify-center">
+        <a href="{{ route('scanner.index') }}" class="bg-[#FFFAF0] rounded-2xl p-6 shadow-sm border border-orange-100 flex flex-col justify-center hover:shadow-md transition">
             <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl">✅</span>
                 <h3 class="text-sm font-semibold text-gray-700">Total Check-in</h3>
             </div>
             <p class="text-3xl font-bold text-gray-900">{{ number_format($totalCheckedInCount) }}</p>
-        </div>
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- Main Events and Chart Section --}}
         <div class="lg:col-span-2 space-y-8">
-            
-            {{-- Events Management / Recent Transactions --}}
+
+            {{-- Events Overview --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
-                    <h2 class="text-base font-bold text-gray-900">Events Management</h2>
-                    @role('admin')
-                    <div class="flex gap-2 w-full sm:w-auto">
-                        <a href="{{ route('admin.events.create') }}" class="flex-1 sm:flex-none text-center text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Add New Event</a>
-                        <a href="{{ route('admin.events.index') }}" class="flex-1 sm:flex-none text-center text-sm font-semibold bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition">View Reports</a>
-                    </div>
-                    @endrole
+                <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-base font-bold text-gray-900">Events Overview</h2>
+                    @if($isAdmin)
+                        <a href="{{ route('admin.events.index') }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Kelola semua →</a>
+                    @endif
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-gray-50 text-gray-500">
                             <tr>
-                                <th class="px-6 py-4 font-medium">ID</th>
-                                <th class="px-6 py-4 font-medium">Event Name</th>
-                                <th class="px-6 py-4 font-medium">Organizer</th>
+                                <th class="px-6 py-4 font-medium">Event</th>
                                 <th class="px-6 py-4 font-medium">Status</th>
+                                <th class="px-6 py-4 font-medium">Tiket</th>
                                 <th class="px-6 py-4 font-medium">Revenue</th>
-                                <th class="px-6 py-4 font-medium text-right">Actions</th>
+                                @if($isAdmin)<th class="px-6 py-4 font-medium text-right">Actions</th>@endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse($recentTransactions->take(5) as $trx)
+                            @forelse($recentEvents as $event)
+                                @php $quota = $event->ticketTiers->sum('quota'); @endphp
                                 <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 text-gray-500 font-medium">#{{ $loop->iteration }}</td>
                                     <td class="px-6 py-4">
-                                        <div class="font-medium text-gray-900 flex items-center gap-2">
-                                            {{ $trx->order->event->title ?? 'Unknown Event' }}
-                                        </div>
+                                        <div class="font-medium text-gray-900 max-w-[220px] truncate">{{ $event->title }}</div>
+                                        <div class="text-xs text-gray-500">{{ $event->start_time->translatedFormat('d M Y') }} • {{ $event->venue->name ?? '-' }}</div>
                                     </td>
-                                    <td class="px-6 py-4 text-gray-600">{{ $trx->order->user->name ?? '-' }}</td>
                                     <td class="px-6 py-4">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            @if($trx->transaction_status === 'settlement') bg-emerald-100 text-emerald-800
-                                            @elseif($trx->transaction_status === 'pending') bg-amber-100 text-amber-800
-                                            @else bg-red-100 text-red-800 @endif">
-                                            {{ ucfirst($trx->transaction_status) }}
-                                        </span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            @if($event->status === 'published') bg-emerald-100 text-emerald-800
+                                            @elseif($event->status === 'draft') bg-amber-100 text-amber-800
+                                            @elseif($event->status === 'completed') bg-blue-100 text-blue-800
+                                            @else bg-red-100 text-red-800 @endif">{{ ucfirst($event->status) }}</span>
                                     </td>
-                                    <td class="px-6 py-4 font-medium text-gray-900">Rp{{ number_format($trx->gross_amount, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 text-gray-600">{{ $event->active_tickets_count }} / {{ number_format($quota) }}</td>
+                                    <td class="px-6 py-4 font-medium text-gray-900">Rp{{ number_format($event->paid_revenue ?? 0, 0, ',', '.') }}</td>
+                                    @if($isAdmin)
                                     <td class="px-6 py-4 text-right">
-                                        <a href="#" class="text-gray-500 hover:text-indigo-600 font-medium text-xs border border-gray-200 px-3 py-1.5 rounded-md mr-1 hover:border-indigo-200 transition">Edit</a>
-                                        <a href="#" class="text-gray-500 hover:text-indigo-600 font-medium text-xs border border-gray-200 px-3 py-1.5 rounded-md hover:border-indigo-200 transition">Manage</a>
+                                        <a href="{{ route('admin.events.edit', $event) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs border border-gray-200 px-3 py-1.5 rounded-md mr-1 hover:border-indigo-200 transition">Edit</a>
+                                        <a href="{{ route('admin.reports.show', $event) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs border border-gray-200 px-3 py-1.5 rounded-md hover:border-indigo-200 transition">Laporan</a>
                                     </td>
+                                    @endif
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="6" class="px-6 py-10 text-center text-gray-500">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <svg class="h-10 w-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                                            No recent transactions.
-                                        </div>
-                                    </td>
-                                </tr>
+                                <tr><td colspan="5" class="px-6 py-10 text-center text-gray-500">Belum ada event.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {{-- Ticket Sales Trend (Mocked for visual) --}}
+            {{-- Ticket Sales Trend (real) --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 class="text-base font-bold text-gray-900 mb-6">Ticket Sales Trend</h2>
+                <h2 class="text-base font-bold text-gray-900 mb-6">Ticket Sales Trend <span class="text-xs font-normal text-gray-400">(12 bulan terakhir)</span></h2>
                 <div class="h-64 w-full">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
 
+            {{-- Recent Transactions --}}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-base font-bold text-gray-900">Recent Transactions</h2>
+                    @if($isAdmin)
+                        <a href="{{ route('admin.finances.index') }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Lihat semua →</a>
+                    @endif
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-gray-50 text-gray-500">
+                            <tr>
+                                <th class="px-6 py-4 font-medium">Order</th>
+                                <th class="px-6 py-4 font-medium">Pembeli</th>
+                                <th class="px-6 py-4 font-medium">Status</th>
+                                <th class="px-6 py-4 font-medium text-right">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @forelse($recentTransactions->take(6) as $trx)
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        @if($isAdmin && $trx->order)
+                                            <a href="{{ route('admin.orders.show', $trx->order) }}" class="font-medium text-indigo-600 hover:text-indigo-500">{{ $trx->order_code }}</a>
+                                        @else
+                                            <span class="font-medium text-gray-900">{{ $trx->order_code }}</span>
+                                        @endif
+                                        <div class="text-xs text-gray-500 max-w-[220px] truncate">{{ $trx->order->event->title ?? 'Unknown Event' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">{{ $trx->order->user->name ?? '-' }}</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            @if($trx->transaction_status === 'settlement') bg-emerald-100 text-emerald-800
+                                            @elseif($trx->transaction_status === 'pending') bg-amber-100 text-amber-800
+                                            @else bg-red-100 text-red-800 @endif">{{ ucfirst($trx->transaction_status) }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-900 text-right">Rp{{ number_format($trx->gross_amount, 0, ',', '.') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="px-6 py-10 text-center text-gray-500">Belum ada transaksi.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         {{-- Side Content: Recent Check-ins --}}
@@ -125,7 +171,7 @@
                 <div class="px-6 py-5 border-b border-gray-200">
                     <h2 class="text-base font-bold text-gray-900">Recent Check-ins</h2>
                 </div>
-                <div class="flex-1 divide-y divide-gray-100 overflow-y-auto max-h-[700px]">
+                <div class="flex-1 divide-y divide-gray-100 overflow-y-auto max-h-[900px]">
                     @forelse($recentCheckIns as $ticket)
                         <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
@@ -160,21 +206,20 @@
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('salesChart');
         if(ctx && typeof Chart !== 'undefined') {
-            // Soft gradient
             let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(45, 212, 191, 0.3)'); // teal-400
+            gradient.addColorStop(0, 'rgba(45, 212, 191, 0.3)');
             gradient.addColorStop(1, 'rgba(45, 212, 191, 0.0)');
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+                    labels: @json($chartLabels),
                     datasets: [{
                         label: 'Sales Trend',
-                        data: [50, 65, 80, 75, 250, 150, 110, 130, 270, 210, 160],
+                        data: @json($chartData),
                         fill: true,
                         backgroundColor: gradient,
-                        borderColor: '#2dd4bf', // teal-400
+                        borderColor: '#2dd4bf',
                         tension: 0.4,
                         borderWidth: 2,
                         pointBackgroundColor: '#fff',
@@ -195,43 +240,23 @@
                             titleFont: { size: 13, family: 'Inter' },
                             bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
                             displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y + ' Tickets';
-                                }
-                            }
+                            callbacks: { label: ctx => ctx.parsed.y + ' Tickets' }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                borderDash: [4, 4],
-                                color: '#f1f5f9',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                font: { family: 'Inter', size: 11 }
-                            },
+                            ticks: { color: '#94a3b8', precision: 0, font: { family: 'Inter', size: 11 } },
+                            grid: { color: '#f1f5f9' },
                             border: { display: false }
                         },
                         x: {
-                            grid: {
-                                display: false,
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                font: { family: 'Inter', size: 11 }
-                            },
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } },
                             border: { display: false }
                         }
                     },
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    }
+                    interaction: { mode: 'index', intersect: false }
                 }
             });
         }
