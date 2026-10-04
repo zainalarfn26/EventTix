@@ -4,37 +4,38 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Tiket Saya & Riwayat Pembelian</h1>
+    <div class="mb-8">
+        <p class="eyebrow mb-3">Akun</p>
+        <h1 class="font-display text-4xl font-bold">Tiket saya</h1>
+        <p class="text-gray-500 mt-2">Riwayat pembelian dan e-ticket kamu.</p>
+    </div>
 
-    <div class="space-y-6">
+    <div class="space-y-5">
         @forelse($orders as $order)
-            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                {{-- Order Header --}}
-                <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div class="flex items-center gap-3 mb-1">
-                            <span class="text-xs font-mono text-indigo-600 font-semibold">#{{ $order->order_code }}</span>
-                            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold
-                                @if($order->status === 'paid') bg-emerald-100 text-emerald-700
-                                @elseif($order->status === 'pending') bg-amber-100 text-amber-700
-                                @else bg-red-100 text-red-700 @endif">
-                                {{ strtoupper($order->status) }}
-                            </span>
+            @php
+                $statusStyle = ['paid' => 'text-emerald-700 bg-emerald-50 border-emerald-200', 'pending' => 'text-amber-700 bg-amber-50 border-amber-200'][$order->status] ?? 'text-red-700 bg-red-50 border-red-200';
+                $statusLabel = ['paid' => 'Lunas', 'pending' => 'Menunggu bayar', 'expired' => 'Kedaluwarsa', 'cancelled' => 'Dibatalkan', 'failed' => 'Gagal'][$order->status] ?? strtoupper($order->status);
+            @endphp
+            <article class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                <div class="p-5 md:p-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <span class="text-xs font-mono font-bold text-gray-500">#{{ $order->order_code }}</span>
+                            <span class="text-[11px] px-2 py-0.5 rounded-md border font-semibold {{ $statusStyle }}">{{ $statusLabel }}</span>
                         </div>
-                        <h2 class="text-lg font-bold text-gray-900">{{ $order->event->title }}</h2>
-                        <p class="text-sm text-gray-500">{{ $order->created_at->translatedFormat('d M Y, H:i') }}</p>
+                        <h2 class="font-display text-xl font-bold leading-snug">{{ $order->event->title }}</h2>
+                        <p class="text-sm text-gray-500 mt-1">Dipesan {{ $order->created_at->translatedFormat('d M Y, H:i') }}</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-500">Total Pembayaran</p>
-                        <p class="text-xl font-extrabold text-gray-900">Rp{{ number_format($order->total_amount, 0, ',', '.') }}</p>
-                        
+                    <div class="md:text-right shrink-0">
+                        <p class="eyebrow mb-1.5">Total</p>
+                        <p class="font-mono text-xl font-bold">Rp{{ number_format($order->total_amount, 0, ',', '.') }}</p>
+
                         @if($order->status === 'pending')
-                            <div x-data="countdown('{{ $order->expires_at->toIso8601String() }}')" x-init="start()" class="mt-1">
-                                <p class="text-xs text-amber-600">Sisa waktu: <strong x-text="timeLeft" class="font-mono text-gray-900 text-sm"></strong></p>
-                                
+                            <div x-data="countdown('{{ $order->expires_at->toIso8601String() }}')" x-init="start()" class="mt-2">
+                                <p class="text-xs text-amber-700">Sisa waktu <strong x-text="timeLeft" class="font-mono text-ink text-sm"></strong></p>
                                 @if($order->transaction && $order->transaction->snap_token)
-                                <button onclick="payOrder('{{ $order->transaction->snap_token }}', '{{ $order->order_code }}')" class="mt-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm">
-                                    Bayar Sekarang
+                                <button onclick="payOrder('{{ $order->transaction->snap_token }}', '{{ $order->order_code }}')" class="mt-2.5 px-4 py-2 bg-flame-500 hover:bg-flame-600 text-white text-xs font-bold rounded-lg transition">
+                                    Bayar sekarang
                                 </button>
                                 @endif
                             </div>
@@ -42,55 +43,53 @@
                     </div>
                 </div>
 
-                {{-- Order Items (Tiers bought) --}}
-                <div class="bg-gray-50 p-5">
-                    <p class="text-sm font-semibold text-gray-700 mb-3">Detail Pesanan:</p>
-                    <div class="space-y-2 mb-4">
+                <div class="perf"></div>
+
+                <div class="p-5 md:p-6 bg-paper/60">
+                    <div class="space-y-2">
                         @foreach($order->items as $item)
                             <div class="flex items-center justify-between text-sm">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: {{ $item->ticketTier->color }}"></div>
-                                    <span class="text-gray-700">{{ $item->ticketTier->name }} <span class="text-gray-400">x{{ $item->quantity }}</span></span>
-                                </div>
-                                <span class="text-gray-900 font-semibold">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                                <span class="flex items-center gap-2.5">
+                                    <span class="h-2.5 w-2.5 rounded-full" style="background-color: {{ $item->ticketTier->color }}"></span>
+                                    <span>{{ $item->ticketTier->name }} <span class="text-gray-400 font-mono">&times;{{ $item->quantity }}</span></span>
+                                </span>
+                                <span class="font-mono font-semibold">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</span>
                             </div>
                         @endforeach
                     </div>
 
-                    {{-- E-Tickets Links if Paid --}}
                     @if($order->status === 'paid' && $order->tickets->isNotEmpty())
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="text-sm font-semibold text-emerald-600 mb-3">E-Tickets Anda:</p>
+                        <div class="mt-5 pt-5 border-t border-gray-200">
+                            <p class="eyebrow mb-3">E-ticket</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                 @foreach($order->tickets as $ticket)
                                     <a href="{{ route('tickets.show', $ticket->ticket_code) }}"
-                                       class="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition">
-                                        <div>
-                                            <p class="text-xs font-bold text-gray-900">{{ $ticket->ticketTier->name }}</p>
-                                            <p class="text-[10px] font-mono text-gray-500">{{ $ticket->ticket_code }}</p>
-                                        </div>
-                                        <div>
+                                       class="flex rounded-lg border border-gray-200 bg-white hover:border-ink transition overflow-hidden">
+                                        <span class="w-1.5 shrink-0" style="background-color: {{ $ticket->ticketTier->color }}"></span>
+                                        <span class="flex-1 flex items-center justify-between gap-2 px-3 py-2.5">
+                                            <span class="min-w-0">
+                                                <span class="block text-sm font-bold truncate">{{ $ticket->ticketTier->name }}</span>
+                                                <span class="block text-[10px] font-mono text-gray-500 truncate">{{ $ticket->ticket_code }}</span>
+                                            </span>
                                             @if($ticket->status === 'checked_in')
-                                                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">Terpakai</span>
+                                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-semibold shrink-0">Terpakai</span>
                                             @else
-                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                <x-icon name="qr" class="h-5 w-5 text-gray-400 shrink-0" />
                                             @endif
-                                        </div>
+                                        </span>
                                     </a>
                                 @endforeach
                             </div>
                         </div>
                     @endif
                 </div>
-            </div>
+            </article>
         @empty
-            <div class="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900">Belum Ada Tiket</h3>
-                <p class="text-gray-500 mt-1 mb-4">Anda belum melakukan pembelian tiket apapun.</p>
-                <a href="{{ route('events.index') }}" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition">Cari Event</a>
+            <div class="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                <x-icon name="ticket" class="h-10 w-10 text-gray-300 mx-auto mb-4" />
+                <h3 class="font-display text-xl font-bold">Belum ada tiket</h3>
+                <p class="text-gray-500 mt-1 mb-6">Kamu belum membeli tiket apa pun.</p>
+                <a href="{{ route('events.index') }}" class="inline-flex px-5 py-2.5 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari event</a>
             </div>
         @endforelse
     </div>
@@ -118,10 +117,10 @@ function payOrder(snapToken, orderCode) {
                     window.location.href = '/orders/' + orderCode + '/ticket';
                 },
                 onPending: function(result) {
-                    alert("Menunggu pembayaran Anda diselesaikan.");
+                    Swal.fire({ ...swalBase, icon: 'info', title: 'Menunggu pembayaran', text: 'Selesaikan pembayaranmu untuk menerbitkan tiket.' });
                 },
                 onError: function(result) {
-                    alert("Pembayaran gagal! Silakan coba metode pembayaran lain.");
+                    Swal.fire({ ...swalBase, icon: 'error', title: 'Pembayaran gagal', text: 'Silakan coba metode pembayaran lain.' });
                 },
                 onClose: function() {
                     // Stay on the same page
@@ -129,11 +128,11 @@ function payOrder(snapToken, orderCode) {
             });
         } else {
             // Local sandbox fallback simulation
-            alert("[SANDBOX] Order " + orderCode + " berhasil dibayar!");
-            window.location.href = '/orders/' + orderCode + '/ticket';
+            Swal.fire({ ...swalBase, icon: 'success', title: 'Pembayaran berhasil', text: 'Order ' + orderCode + ' (sandbox) telah dibayar.', timer: 1800, showConfirmButton: false })
+                .then(() => { window.location.href = '/orders/' + orderCode + '/ticket'; });
         }
     } else {
-        alert("Sistem pembayaran Midtrans belum siap dimuat. Coba refresh halaman.");
+        Swal.fire({ ...swalBase, icon: 'warning', title: 'Belum siap', text: 'Sistem pembayaran belum selesai dimuat. Coba muat ulang halaman.' });
     }
 }
 

@@ -10,16 +10,16 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-[#EBF5FF] border border-blue-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Total Revenue</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">Rp{{ number_format($totals['revenue'], 0, ',', '.') }}</p></div>
-        <div class="bg-[#FFF5F5] border border-red-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Tiket Terjual</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{{ number_format($totals['tickets']) }} <span class="text-sm font-medium text-gray-400">/ {{ number_format($totals['quota']) }}</span></p></div>
-        <div class="bg-[#FFFAF0] border border-orange-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Total Check-in</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{{ number_format($totals['checked_in']) }}</p></div>
-        <div class="bg-[#E6FFFA] border border-teal-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Kehadiran</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{{ $totals['tickets'] > 0 ? round($totals['checked_in'] / $totals['tickets'] * 100) : 0 }}%</p></div>
+        <x-stat dark label="Total revenue" :value="'Rp' . number_format($totals['revenue'], 0, ',', '.')" />
+        <x-stat label="Tiket terjual" :value="number_format($totals['tickets'])" :hint="'Dari kuota ' . number_format($totals['quota'])" />
+        <x-stat label="Total check-in" :value="number_format($totals['checked_in'])" />
+        <x-stat label="Rasio kehadiran" :value="($totals['tickets'] > 0 ? round($totals['checked_in'] / $totals['tickets'] * 100) : 0) . '%'" />
     </div>
 
     <form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex gap-3">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari event..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        <button type="submit" class="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
-        @if(request('q'))<a href="{{ route('admin.reports.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Reset</a>@endif
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari event..." class="flex-1 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
+        <button type="submit" class="px-5 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
+        @if(request('q'))<a href="{{ route('admin.reports.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-ink">Reset</a>@endif
     </form>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">

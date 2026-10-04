@@ -16,31 +16,31 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-[#EBF5FF] border border-blue-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Pendapatan (Settlement)</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">Rp{{ number_format($summary['revenue'], 0, ',', '.') }}</p><p class="text-xs text-gray-500 mt-1">{{ $summary['settled_count'] }} transaksi</p></div>
-        <div class="bg-[#FFFAF0] border border-orange-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Menunggu Pembayaran</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">Rp{{ number_format($summary['pending'], 0, ',', '.') }}</p></div>
-        <div class="bg-[#E6FFFA] border border-teal-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Total Diskon Promo</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">Rp{{ number_format($discounts, 0, ',', '.') }}</p></div>
-        <div class="bg-[#FFF5F5] border border-red-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Gagal / Kedaluwarsa</p><p class="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{{ $summary['failed_count'] }}</p></div>
+        <x-stat dark label="Pendapatan (Settlement)" :value="'Rp' . number_format($summary['revenue'], 0, ',', '.')" :hint="$summary['settled_count'] . ' transaksi'" />
+        <x-stat label="Menunggu pembayaran" :value="'Rp' . number_format($summary['pending'], 0, ',', '.')" />
+        <x-stat label="Total diskon promo" :value="'Rp' . number_format($discounts, 0, ',', '.')" />
+        <x-stat label="Gagal / kedaluwarsa" :value="$summary['failed_count']" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div class="xl:col-span-2 space-y-6">
             <form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3">
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Kode order, nama / email..." class="md:col-span-4 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                <select name="event_id" class="md:col-span-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Kode order, nama / email..." class="md:col-span-4 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
+                <select name="event_id" class="md:col-span-4 bg-paper border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
                     <option value="">Semua Event</option>
                     @foreach($events as $ev)<option value="{{ $ev->id }}" {{ (string) request('event_id') === (string) $ev->id ? 'selected' : '' }}>{{ $ev->title }}</option>@endforeach
                 </select>
-                <select name="status" class="md:col-span-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <select name="status" class="md:col-span-4 bg-paper border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
                     <option value="">Semua Status</option>
                     @foreach(['settlement' => 'Settlement', 'pending' => 'Pending', 'expire' => 'Expire', 'cancel' => 'Cancel', 'deny' => 'Deny'] as $k => $v)
                         <option value="{{ $k }}" {{ request('status') === $k ? 'selected' : '' }}>{{ $v }}</option>
                     @endforeach
                 </select>
-                <input type="date" name="from" value="{{ request('from') }}" class="md:col-span-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" title="Dari tanggal">
-                <input type="date" name="to" value="{{ request('to') }}" class="md:col-span-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" title="Sampai tanggal">
+                <input type="date" name="from" value="{{ request('from') }}" class="md:col-span-4 bg-paper border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-ink focus:ring-0 outline-none" title="Dari tanggal">
+                <input type="date" name="to" value="{{ request('to') }}" class="md:col-span-4 bg-paper border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-ink focus:ring-0 outline-none" title="Sampai tanggal">
                 <div class="md:col-span-4 flex gap-2">
-                    <button type="submit" class="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Terapkan</button>
-                    @if(request()->hasAny(['q', 'event_id', 'status', 'from', 'to']))<a href="{{ route('admin.finances.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Reset</a>@endif
+                    <button type="submit" class="flex-1 px-4 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Terapkan</button>
+                    @if(request()->hasAny(['q', 'event_id', 'status', 'from', 'to']))<a href="{{ route('admin.finances.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-ink">Reset</a>@endif
                 </div>
             </form>
 

@@ -4,28 +4,26 @@
 
 @section('content')
 <div class="max-w-lg mx-auto" x-data="ticketScanner()">
-    <div class="text-center mb-6">
-        <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <svg class="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-        </div>
-        <h1 class="text-2xl font-bold text-gray-900">Gate Scanner</h1>
-        <p class="text-sm text-gray-500 mt-1">Scan QR Code tiket dengan kamera</p>
+    <div class="mb-6">
+        <p class="eyebrow mb-3">Petugas gerbang</p>
+        <h1 class="font-display text-3xl font-bold">Gate scanner</h1>
+        <p class="text-sm text-gray-500 mt-1">Arahkan kamera ke QR tiket. Scan berikutnya otomatis siap.</p>
     </div>
 
     {{-- Camera Scanner --}}
-    <div class="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm">
-        <div id="reader" class="rounded-xl overflow-hidden w-full bg-gray-900 mb-4"></div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 mb-6">
+        <div id="reader" class="rounded-xl overflow-hidden w-full bg-ink mb-4"></div>
         
         <div class="flex items-center gap-2">
             <div class="relative flex-1">
                 <input type="text" x-model="qrInput"
                        @keydown.enter="scanTicket(qrInput)"
-                       class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-                       placeholder="Atau ketik/paste kode secara manual...">
+                       class="w-full bg-white border border-gray-300 text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:border-ink focus:ring-0 outline-none transition"
+                       placeholder="Atau ketik/paste kode manual">
             </div>
             <button @click="scanTicket(qrInput)"
                     :disabled="loading || !qrInput"
-                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition disabled:opacity-50 flex-shrink-0">
+                    class="px-4 py-2.5 bg-ink hover:bg-gray-800 text-white font-semibold rounded-lg transition disabled:opacity-50 flex-shrink-0">
                 <span x-show="!loading">Submit</span>
                 <span x-show="loading">
                     <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
@@ -38,11 +36,11 @@
     <div x-show="result" x-transition class="mb-6">
         {{-- Success Result --}}
         <template x-if="result && result.success">
-            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 text-center shadow-sm">
-                <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg class="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            <div class="bg-emerald-600 rounded-2xl p-6 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <h2 class="text-xl font-bold text-emerald-700 mb-2" x-text="result.message"></h2>
+                <h2 class="font-display text-2xl font-bold text-white mb-2" x-text="result.message"></h2>
 
                 <div class="bg-white rounded-xl p-4 mt-4 space-y-3 text-left border border-gray-200">
                     <div class="flex justify-between">
@@ -59,37 +57,37 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-500">Kode Tiket</span>
-                        <span class="text-sm font-mono font-bold text-indigo-600" x-text="result.ticket?.code"></span>
+                        <span class="text-sm font-mono font-bold text-ink" x-text="result.ticket?.code"></span>
                     </div>
                 </div>
 
                 {{-- Wristband Instruction --}}
                 <div class="mt-4 p-4 rounded-xl border-2 border-dashed text-center"
-                     :style="`border-color: ${result.ticket?.tier_color || '#6366f1'}; background-color: ${result.ticket?.tier_color || '#6366f1'}10`">
+                     :style="`border-color: ${result.ticket?.tier_color || '#14130F'}; background-color: ${result.ticket?.tier_color || '#14130F'}18`">
                     <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Berikan Gelang Warna</p>
                     <p class="text-3xl font-extrabold text-gray-900 tracking-widest" x-text="(result.ticket?.wristband_color || '').toUpperCase()"></p>
                 </div>
                 
-                <p class="mt-4 text-xs text-emerald-600 font-medium animate-pulse">Menyiapkan scanner berikutnya...</p>
+                <p class="mt-4 text-xs text-emerald-100 font-medium animate-pulse">Scanner berikutnya siap...</p>
             </div>
         </template>
 
         {{-- Error Result --}}
         <template x-if="result && !result.success">
-            <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center shadow-sm">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            <div class="bg-red-600 rounded-2xl p-6 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                 </div>
-                <h2 class="text-lg font-bold text-red-700 mb-4" x-text="result.message"></h2>
+                <h2 class="font-display text-xl font-bold text-white mb-4" x-text="result.message"></h2>
                 
-                <p class="mt-4 text-xs text-red-600 font-medium animate-pulse">Menyiapkan scanner berikutnya...</p>
+                <p class="mt-4 text-xs text-red-100 font-medium animate-pulse">Scanner berikutnya siap...</p>
             </div>
         </template>
     </div>
 
     {{-- Instructions --}}
-    <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
-        <h3 class="text-sm font-bold text-indigo-600 mb-2">Panduan Petugas (Organizer)</h3>
+    <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-6">
+        <p class="eyebrow mb-3">Panduan petugas</p>
         <ol class="text-xs text-gray-500 space-y-1.5 list-decimal list-inside leading-relaxed">
             <li>Arahkan kamera ke QR Code di HP customer</li>
             <li>Jika <strong class="text-emerald-600">VALID</strong>: Berikan <strong class="text-gray-700">gelang sesuai warna</strong></li>
@@ -98,7 +96,7 @@
     </div>
 
     {{-- Scan History --}}
-    <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-10 shadow-sm" x-init="fetchHistory()">
+    <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-10" x-init="fetchHistory()">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-bold text-gray-900">Riwayat Scan Terakhir</h3>
             <button @click="fetchHistory()" class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition">
@@ -116,7 +114,7 @@
                     </div>
                     <div class="text-right flex flex-col items-end gap-1">
                         <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-full tracking-wide" 
-                              :style="`color: ${item.tier_color || '#6366f1'}; background-color: ${item.tier_color || '#6366f1'}15`" 
+                              :style="`color: ${item.tier_color || '#14130F'}; background-color: ${item.tier_color || '#14130F'}15`" 
                               x-text="item.tier"></span>
                         <span class="text-xs font-semibold text-gray-600">
                             Gelang: <span x-text="(item.wristband_color || '').toUpperCase()"></span>
@@ -286,13 +284,13 @@ function ticketScanner() {
 /* Custom styling for html5-qrcode elements */
 #reader { border: none !important; }
 #reader button { 
-    background-color: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 8px; 
+    background-color: #14130F; color: white; border: none; padding: 6px 12px; border-radius: 8px; 
     font-size: 12px; font-weight: 600; cursor: pointer; margin: 4px;
 }
 #reader select {
-    background-color: #f9fafb; color: #111827; border: 1px solid #d1d5db; padding: 6px; border-radius: 8px; margin: 4px;
+    background-color: #FAF8F4; color: #14130F; border: 1px solid #D0CCBF; padding: 6px; border-radius: 8px; margin: 4px;
 }
-#reader__dashboard_section_csr span { color: #6b7280 !important; }
-#reader__dashboard_section_swaplink { color: #4f46e5 !important; text-decoration: none; }
+#reader__dashboard_section_csr span { color: #78736A !important; }
+#reader__dashboard_section_swaplink { color: #FF5A1F !important; text-decoration: none; }
 </style>
 @endpush

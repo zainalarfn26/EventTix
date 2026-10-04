@@ -28,8 +28,8 @@
 
     @if($query !== '' && $totalResults === 0)
         <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
-            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-                🔍
+            <div class="w-16 h-16 bg-paper border border-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-400">
+                <x-icon name="search" class="h-8 w-8" />
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-1">Tidak ada hasil ditemukan</h3>
             <p class="text-sm text-gray-500 max-w-md mx-auto">
@@ -43,7 +43,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg">📅</span>
+                    <x-icon name="calendar" class="h-4 w-4 text-gray-700" />
                     <h2 class="text-base font-bold text-gray-900">Event ({{ $events->count() }})</h2>
                 </div>
                 <a href="{{ route('admin.events.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Lihat semua event →</a>
@@ -61,8 +61,10 @@
                                     {{ strtoupper($event->status) }}
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">
-                                📍 {{ $event->venue->name ?? 'Venue Belum Ditentukan' }} • 🗓️ {{ $event->start_time->translatedFormat('d M Y, H:i') }} WIB
+                            <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                                <span><x-icon name="pin" class="h-3 w-3 inline text-gray-400 mr-0.5" /> {{ $event->venue->name ?? 'Venue Belum Ditentukan' }}</span>
+                                <span>&bull;</span>
+                                <span><x-icon name="clock" class="h-3 w-3 inline text-gray-400 mr-0.5" /> {{ $event->start_time->translatedFormat('d M Y, H:i') }} WIB</span>
                             </p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -80,7 +82,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg">👥</span>
+                    <x-icon name="users" class="h-4 w-4 text-gray-700" />
                     <h2 class="text-base font-bold text-gray-900">Akun Pengguna ({{ $users->count() }})</h2>
                 </div>
                 <a href="{{ route('admin.accounts.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Buka kelola akun →</a>
@@ -90,8 +92,9 @@
                     @php $role = $user->getRoleNames()->first() ?? 'customer'; @endphp
                     <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50 transition">
                         <div class="flex items-center gap-3">
-                            <img class="h-10 w-10 rounded-full border border-gray-200" 
-                                 src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=6366f1&color=fff&size=64" alt="">
+                            <div class="h-10 w-10 rounded-full bg-ink text-white flex items-center justify-center font-bold text-sm">
+                                {{ strtoupper(mb_substr($user->name, 0, 1)) }}
+                            </div>
                             <div>
                                 <h3 class="text-sm font-bold text-gray-900">{{ $user->name }}</h3>
                                 <p class="text-xs text-gray-500">{{ $user->email }}</p>
@@ -115,7 +118,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg">💳</span>
+                    <x-icon name="cash" class="h-4 w-4 text-gray-700" />
                     <h2 class="text-base font-bold text-gray-900">Pesanan ({{ $orders->count() }})</h2>
                 </div>
                 <a href="{{ route('admin.finances.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Buka finances →</a>
@@ -152,7 +155,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg">🎫</span>
+                    <x-icon name="ticket" class="h-4 w-4 text-gray-700" />
                     <h2 class="text-base font-bold text-gray-900">Tiket ({{ $tickets->count() }})</h2>
                 </div>
                 <a href="{{ route('admin.tickets.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Kelola semua tiket →</a>
@@ -193,7 +196,7 @@
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                         <div class="flex items-center gap-2">
-                            <span class="text-lg">🏟️</span>
+                            <x-icon name="pin" class="h-4 w-4 text-gray-700" />
                             <h2 class="text-base font-bold text-gray-900">Venue ({{ $venues->count() }})</h2>
                         </div>
                         <a href="{{ route('admin.venues.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Kelola venue →</a>
@@ -216,7 +219,7 @@
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                         <div class="flex items-center gap-2">
-                            <span class="text-lg">🏷️</span>
+                            <x-icon name="tag" class="h-4 w-4 text-gray-700" />
                             <h2 class="text-base font-bold text-gray-900">Kode Promo ({{ $promos->count() }})</h2>
                         </div>
                         <a href="{{ route('admin.promos.index', ['q' => $query]) }}" class="text-xs font-semibold text-indigo-600 hover:underline">Kelola promo →</a>

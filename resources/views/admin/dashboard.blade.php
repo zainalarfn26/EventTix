@@ -5,55 +5,32 @@
 @section('content')
 @php $isAdmin = auth()->user()->hasRole('admin'); @endphp
 <div class="max-w-7xl mx-auto">
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-sm text-gray-500 mt-1">Halo, {{ auth()->user()->name }} 👋 — ringkasan aktivitas EventTix hari ini.</p>
+            <p class="eyebrow mb-3">{{ now()->translatedFormat('l, d F Y') }}</p>
+            <h1 class="font-display text-3xl font-bold">Halo, {{ \Illuminate\Support\Str::before(auth()->user()->name, ' ') }}</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ $isAdmin ? 'Ringkasan aktivitas EventTix.' : 'Ringkasan check-in dan event yang kamu kelola.' }}</p>
         </div>
         @if($isAdmin)
         <div class="flex gap-2">
-            <a href="{{ route('admin.events.create') }}" class="text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">+ Event Baru</a>
-            <a href="{{ route('admin.reports.index') }}" class="text-sm font-semibold bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Lihat Laporan</a>
+            <a href="{{ route('admin.events.create') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold bg-ink text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition"><x-icon name="plus" class="h-4 w-4" /> Event baru</a>
+            <a href="{{ route('admin.reports.index') }}" class="text-sm font-semibold bg-white border border-gray-300 text-ink px-4 py-2 rounded-lg hover:border-ink transition">Laporan</a>
         </div>
+        @else
+        <a href="{{ route('scanner.index') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold bg-flame-500 text-white px-4 py-2 rounded-lg hover:bg-flame-600 transition"><x-icon name="qr" class="h-4 w-4" /> Buka scanner</a>
         @endif
     </div>
 
-    {{-- Stats Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <a href="{{ $isAdmin ? route('admin.finances.index') : '#' }}" class="bg-[#EBF5FF] rounded-2xl p-6 shadow-sm border border-blue-100 flex flex-col justify-center hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">💰</span>
-                <h3 class="text-sm font-semibold text-gray-700">Total Revenue</h3>
-            </div>
-            <p class="text-3xl font-bold text-gray-900">Rp{{ number_format($totalRevenue, 0, ',', '.') }}</p>
-            @if($isAdmin && $pendingOrdersCount > 0)
-                <p class="text-xs text-blue-600 mt-2 font-medium">{{ $pendingOrdersCount }} order menunggu pembayaran</p>
-            @endif
-        </a>
-
-        <a href="{{ $isAdmin ? route('admin.events.index') : '#' }}" class="bg-[#E6FFFA] rounded-2xl p-6 shadow-sm border border-teal-100 flex flex-col justify-center hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">📅</span>
-                <h3 class="text-sm font-semibold text-gray-700">Total Events</h3>
-            </div>
-            <p class="text-3xl font-bold text-gray-900">{{ $totalEventsCount }}</p>
-        </a>
-
-        <a href="{{ $isAdmin ? route('admin.tickets.index') : '#' }}" class="bg-[#FFF5F5] rounded-2xl p-6 shadow-sm border border-red-100 flex flex-col justify-center hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">🎫</span>
-                <h3 class="text-sm font-semibold text-gray-700">Tickets Sold</h3>
-            </div>
-            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalTicketsSold) }}</p>
-        </a>
-
-        <a href="{{ route('scanner.index') }}" class="bg-[#FFFAF0] rounded-2xl p-6 shadow-sm border border-orange-100 flex flex-col justify-center hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="text-xl">✅</span>
-                <h3 class="text-sm font-semibold text-gray-700">Total Check-in</h3>
-            </div>
-            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalCheckedInCount) }}</p>
-        </a>
+    {{-- Stats --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4 mb-8">
+        @if($isAdmin)
+            <x-stat dark label="Total pendapatan" :value="'Rp' . number_format($totalRevenue, 0, ',', '.')"
+                    :hint="$pendingOrdersCount > 0 ? $pendingOrdersCount . ' order menunggu pembayaran' : null"
+                    :href="route('admin.finances.index')" />
+        @endif
+        <x-stat label="Total event" :value="$totalEventsCount" :href="$isAdmin ? route('admin.events.index') : null" />
+        <x-stat label="Tiket terjual" :value="number_format($totalTicketsSold)" :href="$isAdmin ? route('admin.tickets.index') : null" />
+        <x-stat label="Sudah check-in" :value="number_format($totalCheckedInCount)" :href="route('scanner.index')" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -74,7 +51,7 @@
                                 <th class="px-6 py-4 font-medium">Event</th>
                                 <th class="px-6 py-4 font-medium">Status</th>
                                 <th class="px-6 py-4 font-medium">Tiket</th>
-                                <th class="px-6 py-4 font-medium">Revenue</th>
+                                @if($isAdmin)<th class="px-6 py-4 font-medium">Revenue</th>@endif
                                 @if($isAdmin)<th class="px-6 py-4 font-medium text-right">Actions</th>@endif
                             </tr>
                         </thead>
@@ -94,7 +71,7 @@
                                             @else bg-red-100 text-red-800 @endif">{{ ucfirst($event->status) }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-gray-600">{{ $event->active_tickets_count }} / {{ number_format($quota) }}</td>
-                                    <td class="px-6 py-4 font-medium text-gray-900">Rp{{ number_format($event->paid_revenue ?? 0, 0, ',', '.') }}</td>
+                                    @if($isAdmin)<td class="px-6 py-4 font-medium text-gray-900">Rp{{ number_format($event->paid_revenue ?? 0, 0, ',', '.') }}</td>@endif
                                     @if($isAdmin)
                                     <td class="px-6 py-4 text-right">
                                         <a href="{{ route('admin.events.edit', $event) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs border border-gray-200 px-3 py-1.5 rounded-md mr-1 hover:border-indigo-200 transition">Edit</a>
@@ -119,6 +96,7 @@
             </div>
 
             {{-- Recent Transactions --}}
+            @if($isAdmin)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-base font-bold text-gray-900">Recent Transactions</h2>
@@ -163,6 +141,7 @@
                     </table>
                 </div>
             </div>
+            @endif
         </div>
 
         {{-- Side Content: Recent Check-ins --}}
@@ -175,7 +154,7 @@
                     @forelse($recentCheckIns as $ticket)
                         <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm" style="background-color: {{ $ticket->ticketTier->color ?? '#6366f1' }}">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm" style="background-color: {{ $ticket->ticketTier->color ?? '#14130F' }}">
                                     {{ substr($ticket->ticketTier->name ?? 'N', 0, 2) }}
                                 </div>
                                 <div>
@@ -207,8 +186,8 @@
         const ctx = document.getElementById('salesChart');
         if(ctx && typeof Chart !== 'undefined') {
             let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(45, 212, 191, 0.3)');
-            gradient.addColorStop(1, 'rgba(45, 212, 191, 0.0)');
+            gradient.addColorStop(0, 'rgba(255, 90, 31, 0.22)');
+            gradient.addColorStop(1, 'rgba(255, 90, 31, 0.0)');
 
             new Chart(ctx, {
                 type: 'line',
@@ -219,11 +198,11 @@
                         data: @json($chartData),
                         fill: true,
                         backgroundColor: gradient,
-                        borderColor: '#2dd4bf',
+                        borderColor: '#FF5A1F',
                         tension: 0.4,
                         borderWidth: 2,
                         pointBackgroundColor: '#fff',
-                        pointBorderColor: '#2dd4bf',
+                        pointBorderColor: '#FF5A1F',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6
@@ -235,7 +214,7 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#1e293b',
+                            backgroundColor: '#14130F',
                             padding: 10,
                             titleFont: { size: 13, family: 'Inter' },
                             bodyFont: { size: 14, family: 'Inter', weight: 'bold' },

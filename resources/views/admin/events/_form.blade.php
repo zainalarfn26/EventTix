@@ -142,7 +142,9 @@
                                 <input type="hidden" :name="`tiers[${index}][is_active]`" value="1">
                                 @endif
                                 <button type="button" @click="removeTier(index)" x-show="tiers.length > 1 && !(tier.sold_count > 0)"
-                                        class="w-6 h-6 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-xs font-bold transition" title="Hapus kelas">✕</button>
+                                        class="w-6 h-6 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-md transition" title="Hapus kelas">
+                                    <x-icon name="x" class="h-3.5 w-3.5" />
+                                </button>
                             </div>
                         </div>
 

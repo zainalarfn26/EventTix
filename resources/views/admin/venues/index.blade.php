@@ -30,15 +30,17 @@
                 @if($venue->layout_image)
                     <img src="{{ asset('storage/' . $venue->layout_image) }}" alt="Denah {{ $venue->name }}" class="h-36 w-full object-cover bg-gray-100">
                 @else
-                    <div class="h-36 bg-gradient-to-br from-indigo-50 to-sky-50 flex items-center justify-center text-4xl">🏟️</div>
+                    <div class="h-36 bg-gray-100 flex items-center justify-center text-gray-400">
+                        <x-icon name="pin" class="h-10 w-10 text-gray-300" />
+                    </div>
                 @endif
                 <div class="p-5 flex-1 flex flex-col">
                     <h2 class="text-base font-bold text-gray-900">{{ $venue->name }}</h2>
                     <p class="text-sm text-gray-500 mt-0.5">{{ $venue->city }}</p>
                     @if($venue->address)<p class="text-xs text-gray-400 mt-2 line-clamp-2">{{ $venue->address }}</p>@endif
                     <div class="mt-3 flex items-center gap-3 text-xs font-semibold">
-                        <span class="px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-md text-gray-600">👥 {{ number_format($venue->capacity) }}</span>
-                        <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-100 rounded-md text-indigo-600">📅 {{ $venue->events_count }} event</span>
+                        <span class="px-2.5 py-1 bg-paper border border-gray-200 rounded-md text-gray-600 flex items-center gap-1.5"><x-icon name="users" class="h-3.5 w-3.5 text-gray-400" /> {{ number_format($venue->capacity) }}</span>
+                        <span class="px-2.5 py-1 bg-paper border border-gray-200 rounded-md text-ink flex items-center gap-1.5"><x-icon name="calendar" class="h-3.5 w-3.5 text-gray-400" /> {{ $venue->events_count }} event</span>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2 mt-auto">
                         <button type="button" @click='openEdit(@json($payload, JSON_HEX_APOS | JSON_HEX_AMP))'

@@ -1,82 +1,65 @@
 @extends('layouts.app')
 
-@section('title', 'Login - EventTix')
+@section('title', 'Masuk - EventTix')
 
 @section('content')
-<div class="max-w-md mx-auto my-12" x-data="{ email: '', password: '' }">
-    <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm space-y-6">
-        <div class="text-center">
-            <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-            </div>
-            <h1 class="text-2xl font-bold text-gray-900">Masuk ke EventTix</h1>
-            <p class="text-sm text-gray-500 mt-1">Akses dashboard admin, organizer, atau akun penonton.</p>
+<div class="max-w-4xl mx-auto my-6 md:my-10 grid md:grid-cols-[1fr_1.1fr] rounded-2xl overflow-hidden border border-gray-200 bg-white"
+     x-data="{ email: '', password: '' }">
+
+    {{-- Brand panel --}}
+    <div class="relative bg-ink text-white p-8 md:p-10 flex flex-col justify-between min-h-[220px]">
+        <div>
+            <p class="eyebrow !text-white/50">EventTix</p>
+            <h1 class="font-display text-3xl md:text-4xl font-bold leading-[1.05] mt-4">Satu akun,<br>semua tiketmu.</h1>
+            <p class="mt-4 text-sm text-white/60 max-w-xs leading-relaxed">Masuk untuk melihat tiket, mengelola event, atau bertugas di gerbang.</p>
         </div>
+        <div class="mt-10 space-y-1.5" aria-hidden="true">
+            <div class="h-2.5 rounded-sm" style="background:#FF5A1F;width:100%"></div>
+            <div class="h-2.5 rounded-sm" style="background:#F6F3EC;width:78%"></div>
+            <div class="h-2.5 rounded-sm" style="background:#8B8677;width:56%"></div>
+            <div class="h-2.5 rounded-sm" style="background:#3F3B35;width:34%"></div>
+        </div>
+    </div>
+
+    {{-- Form --}}
+    <div class="p-8 md:p-10">
+        <h2 class="font-display text-2xl font-bold">Masuk</h2>
+        <p class="text-sm text-gray-500 mt-1">Gunakan email dan password akunmu.</p>
 
         @if($errors->any())
-            <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium">
+            <div class="mt-5 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
                 {{ $errors->first() }}
             </div>
         @endif
 
-        <!-- Quick Demo Fill Buttons -->
-        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-            <span class="text-xs font-semibold text-gray-500 block text-center uppercase tracking-wider">Demo Login 1-Klik</span>
-            <div class="grid grid-cols-3 gap-2">
-                <button
-                    type="button"
-                    @click="email = 'admin@seatpulse.com'; password = 'password123'"
-                    class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2 px-2 rounded-lg border border-indigo-200 transition">
-                    Admin
-                </button>
-                <button
-                    type="button"
-                    @click="email = 'organizer@seatpulse.com'; password = 'password123'"
-                    class="bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold py-2 px-2 rounded-lg border border-purple-200 transition">
-                    Organizer
-                </button>
-                <button
-                    type="button"
-                    @click="email = 'customer@seatpulse.com'; password = 'password123'"
-                    class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold py-2 px-2 rounded-lg border border-emerald-200 transition">
-                    Customer
-                </button>
-            </div>
-        </div>
-
-        <form action="{{ route('login') }}" method="POST" class="space-y-4">
+        <form action="{{ route('login') }}" method="POST" class="mt-6 space-y-4">
             @csrf
-
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Alamat Email</label>
-                <input
-                    type="email"
-                    name="email"
-                    x-model="email"
-                    placeholder="nama@email.com"
-                    class="w-full bg-white border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-4 py-3 text-gray-900 text-sm outline-none transition"
-                    required
-                />
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <input id="email" type="email" name="email" x-model="email" placeholder="nama@email.com" required
+                       class="w-full bg-white border border-gray-300 focus:border-ink focus:ring-0 rounded-lg px-4 py-3 text-sm outline-none transition">
             </div>
-
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                <input
-                    type="password"
-                    name="password"
-                    x-model="password"
-                    placeholder="••••••••"
-                    class="w-full bg-white border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-4 py-3 text-gray-900 text-sm outline-none transition"
-                    required
-                />
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <input id="password" type="password" name="password" x-model="password" placeholder="Password" required
+                       class="w-full bg-white border border-gray-300 focus:border-ink focus:ring-0 rounded-lg px-4 py-3 text-sm outline-none transition">
             </div>
-
-            <button
-                type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-sm transition">
-                Masuk Sekarang
+            <button type="submit" class="w-full bg-ink hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                Masuk <x-icon name="arrow-right" class="h-4 w-4" />
             </button>
         </form>
+
+        <div class="mt-8 pt-6 border-t border-dashed border-gray-300">
+            <p class="eyebrow mb-3">Akun demo</p>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" @click="email = 'admin@seatpulse.com'; password = 'password123'"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-300 hover:border-ink hover:bg-paper transition">Admin</button>
+                <button type="button" @click="email = 'organizer@seatpulse.com'; password = 'password123'"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-300 hover:border-ink hover:bg-paper transition">Organizer</button>
+                <button type="button" @click="email = 'customer@seatpulse.com'; password = 'password123'"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-300 hover:border-ink hover:bg-paper transition">Customer</button>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

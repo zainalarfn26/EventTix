@@ -1,202 +1,179 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', $event->title . ' - EventTix')
 
 @section('content')
+@php
+    $tiers = $event->ticketTiers;
+    $colors = $tiers->pluck('color')->filter()->values();
+    if ($colors->isEmpty()) { $colors = collect(['#14130F', '#FF5A1F']); }
+    $stops = [];
+    foreach ($colors as $i => $c) { $stops[] = "$c " . ($i * 22) . "px, $c " . (($i + 1) * 22) . "px"; }
+    $stripe = 'background: repeating-linear-gradient(115deg, ' . implode(', ', $stops) . ');';
+    $ended = $event->end_time < now();
+@endphp
 <div x-data="ticketOrder()" x-cloak>
 
-    {{-- Event Header --}}
-    <div class="mb-8">
-        <a href="{{ route('events.index') }}" class="text-sm text-indigo-600 hover:text-indigo-500 mb-4 inline-flex items-center gap-1 font-medium">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            Kembali ke Daftar Event
-        </a>
-        <div class="mt-4 flex flex-col lg:flex-row gap-8">
-            {{-- Banner --}}
-            <div class="lg:w-2/5">
-                <div class="aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-50 to-gray-100 flex items-center justify-center shadow-sm border border-gray-200">
-                    @if($event->banner_image)
-                        <img src="{{ Storage::url($event->banner_image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
-                    @else
-                        <svg class="h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                    @endif
-                </div>
-            </div>
+    <a href="{{ route('events.index') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-ink mb-6 transition">
+        <x-icon name="arrow-left" class="h-4 w-4" /> Semua event
+    </a>
 
-            {{-- Event Details --}}
-            <div class="lg:w-3/5">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">{{ $event->title }}</h1>
-                <div class="space-y-3 text-gray-600">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ $event->venue->name }}</p>
-                            <p class="text-sm text-gray-500">{{ $event->venue->address }}, {{ $event->venue->city }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg class="h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        </div>
-                        <p class="font-semibold text-gray-800">{{ $event->start_time->translatedFormat('l, d F Y') }}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <p class="text-gray-800">{{ $event->start_time->format('H:i') }} — {{ $event->end_time->format('H:i') }} WIB</p>
-                    </div>
-                </div>
-                @if($event->description)
-                    <p class="mt-4 text-gray-500 leading-relaxed">{{ $event->description }}</p>
+    {{-- Hero --}}
+    <section class="grid lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-12 pb-10 border-b border-gray-200">
+        <div class="rounded-2xl overflow-hidden border border-gray-200 bg-white self-start">
+            <div class="aspect-[16/10] relative" @if(!$event->banner_image) style="{{ $stripe }}" @endif>
+                @if($event->banner_image)
+                    <img src="{{ Storage::url($event->banner_image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
                 @endif
             </div>
+            <div class="h-2" style="{{ $stripe }}"></div>
         </div>
-    </div>
 
-    {{-- Venue Zone Map --}}
-    <div class="mb-8">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Denah Zona</h2>
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden shadow-sm">
-            {{-- Stage --}}
-            <div class="w-3/4 mx-auto mb-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 text-center py-3 rounded-xl">
-                <span class="text-sm font-bold text-gray-600 tracking-widest uppercase">Panggung / Stage</span>
+        <div class="flex flex-col">
+            <p class="eyebrow mb-4">{{ $event->start_time->translatedFormat('l, d F Y') }}</p>
+            <h1 class="font-display text-4xl md:text-5xl font-bold leading-[1.02]">{{ $event->title }}</h1>
+
+            <dl class="mt-7 divide-y divide-gray-200 border-y border-gray-200 text-sm">
+                <div class="flex gap-4 py-3.5">
+                    <dt class="w-20 shrink-0 eyebrow pt-0.5">Venue</dt>
+                    <dd><p class="font-semibold">{{ $event->venue->name }}</p><p class="text-gray-500">{{ $event->venue->address }}, {{ $event->venue->city }}</p></dd>
+                </div>
+                <div class="flex gap-4 py-3.5">
+                    <dt class="w-20 shrink-0 eyebrow pt-0.5">Waktu</dt>
+                    <dd class="font-semibold font-mono">{{ $event->start_time->format('H:i') }} &ndash; {{ $event->end_time->format('H:i') }} WIB</dd>
+                </div>
+                <div class="flex gap-4 py-3.5">
+                    <dt class="w-20 shrink-0 eyebrow pt-0.5">Gelang</dt>
+                    <dd class="text-gray-600">Tunjukkan QR di gerbang, lalu tukar dengan gelang sesuai kelas tiketmu.</dd>
+                </div>
+            </dl>
+
+            @if($event->description)
+                <p class="mt-6 text-gray-600 leading-relaxed">{{ $event->description }}</p>
+            @endif
+        </div>
+    </section>
+
+    {{-- Zone map --}}
+    <section class="py-10 border-b border-gray-200">
+        <div class="flex items-end justify-between mb-5">
+            <h2 class="font-display text-2xl font-bold">Denah zona</h2>
+            <p class="text-sm text-gray-500 hidden sm:block">Klik zona untuk memilih kelas</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-7">
+            <div class="w-3/4 mx-auto mb-6 bg-ink text-white text-center py-2.5 rounded-lg">
+                <span class="text-[11px] font-semibold tracking-[0.3em] uppercase">Panggung</span>
             </div>
-
-            {{-- Zone Visualization --}}
-            <div class="space-y-3">
-                @foreach($event->ticketTiers as $tier)
-                    <div class="rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all cursor-pointer hover:scale-[1.01]"
-                         style="background-color: {{ $tier->color }}10; border-color: {{ $tier->color }}40;"
-                         @click="selectTier({{ $tier->id }})">
-                        <div class="flex items-center gap-3">
-                            <div class="w-5 h-5 rounded-full flex-shrink-0 shadow-sm" style="background-color: {{ $tier->color }}"></div>
-                            <div>
-                                <span class="font-bold text-gray-900 text-sm">{{ $tier->zone_label ?? $tier->name }}</span>
-                                <span class="text-xs text-gray-500 ml-2">{{ $tier->name }}</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            @if($tier->available_quota > 0)
-                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold text-emerald-700 bg-emerald-100">{{ $tier->available_quota }} tersisa</span>
-                            @else
-                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold text-red-700 bg-red-100">SOLD OUT</span>
-                            @endif
-                        </div>
-                    </div>
+            <div class="grid sm:grid-cols-2 gap-2.5">
+                @foreach($tiers as $tier)
+                    <button type="button" @click="selectTier({{ $tier->id }})" {{ $tier->available_quota > 0 ? '' : 'disabled' }}
+                            class="text-left flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-paper px-4 py-3 hover:border-ink transition disabled:opacity-50 disabled:hover:border-gray-200">
+                        <span class="flex items-center gap-3 min-w-0">
+                            <span class="h-8 w-1.5 rounded-full shrink-0" style="background-color: {{ $tier->color }}"></span>
+                            <span class="min-w-0">
+                                <span class="block font-semibold text-sm truncate">{{ $tier->zone_label ?? $tier->name }}</span>
+                                <span class="block text-xs text-gray-500">{{ $tier->name }}</span>
+                            </span>
+                        </span>
+                        <span class="text-xs font-semibold shrink-0 {{ $tier->available_quota > 0 ? 'text-gray-600' : 'text-flame-600' }}">
+                            {{ $tier->available_quota > 0 ? $tier->available_quota . ' tersisa' : 'Sold out' }}
+                        </span>
+                    </button>
                 @endforeach
             </div>
         </div>
-    </div>
+    </section>
 
-    {{-- Ticket Tier Selection --}}
-    <div class="mb-8">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Pilih Kelas Tiket</h2>
+    {{-- Tiers --}}
+    <section class="py-10">
+        <h2 class="font-display text-2xl font-bold mb-5">Pilih tiket</h2>
+        @if($ended)
+            <div class="rounded-xl border border-gray-200 bg-white p-6 text-gray-600">Event ini sudah selesai.</div>
+        @endif
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($event->ticketTiers as $tier)
-                <div class="bg-white border-2 rounded-2xl p-5 transition-all duration-200 cursor-pointer shadow-sm"
-                     :class="selectedTiers[{{ $tier->id }}] ? 'border-indigo-500 shadow-md shadow-indigo-100' : 'border-gray-200 hover:border-gray-300'"
+            @foreach($tiers as $tier)
+                <article class="relative bg-white border rounded-2xl overflow-hidden transition-colors cursor-pointer flex"
+                     :class="selectedTiers[{{ $tier->id }}] ? 'border-ink ring-1 ring-ink' : 'border-gray-200 hover:border-gray-400'"
                      @click="selectTier({{ $tier->id }})">
-
-                    {{-- Tier Header --}}
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full shadow-sm" style="background-color: {{ $tier->color }}"></div>
-                            <span class="text-lg font-bold text-gray-900">{{ $tier->name }}</span>
+                    <div class="w-2.5 shrink-0" style="background-color: {{ $tier->color }}"></div>
+                    <div class="flex-1 p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="font-display text-lg font-bold leading-tight">{{ $tier->name }}</h3>
+                            <span class="text-[11px] font-semibold text-gray-500 border border-gray-200 rounded-md px-2 py-0.5 shrink-0">Gelang {{ $tier->wristband_color }}</span>
                         </div>
-                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold" style="background-color: {{ $tier->color }}15; color: {{ $tier->color }}">
-                            Gelang {{ $tier->wristband_color }}
-                        </span>
-                    </div>
 
-                    {{-- Price --}}
-                    <div class="mb-3">
-                        <span class="text-2xl font-extrabold text-gray-900">Rp{{ number_format($tier->price, 0, ',', '.') }}</span>
-                        <span class="text-xs text-gray-400">/tiket</span>
-                    </div>
+                        <p class="mt-3 font-mono text-2xl font-bold">Rp{{ number_format($tier->price, 0, ',', '.') }}</p>
 
-                    {{-- Description --}}
-                    @if($tier->description)
-                        <p class="text-xs text-gray-500 mb-3 line-clamp-2">{{ $tier->description }}</p>
-                    @endif
+                        @if($tier->description)
+                            <p class="mt-2 text-xs text-gray-500 line-clamp-2">{{ $tier->description }}</p>
+                        @endif
 
-                    {{-- Zone & Availability --}}
-                    <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
-                        <span class="flex items-center gap-1">
-                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
-                            {{ $tier->zone_label ?? '-' }}
-                        </span>
-                        @if($tier->available_quota > 0)
-                            <span class="text-emerald-600 font-semibold">{{ $tier->available_quota }}/{{ $tier->quota }} tersisa</span>
-                        @else
-                            <span class="text-red-500 font-semibold">SOLD OUT</span>
+                        <div class="mt-4 flex items-center justify-between text-xs text-gray-500">
+                            <span class="flex items-center gap-1"><x-icon name="pin" class="h-3 w-3" /> {{ $tier->zone_label ?? '-' }}</span>
+                            @if($tier->available_quota > 0)
+                                <span class="font-medium">{{ $tier->available_quota }}/{{ $tier->quota }} tersisa</span>
+                            @else
+                                <span class="font-bold text-flame-600">Sold out</span>
+                            @endif
+                        </div>
+
+                        @if($tier->available_quota > 0 && !$ended)
+                            <div class="mt-4 pt-4 border-t border-dashed border-gray-300 flex items-center justify-between" @click.stop>
+                                <span class="text-xs text-gray-500">Jumlah</span>
+                                <div class="flex items-center gap-1 border border-gray-300 rounded-lg">
+                                    <button type="button" @click="decrementQty({{ $tier->id }})" class="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-ink transition" aria-label="Kurangi">
+                                        <x-icon name="minus" class="h-4 w-4" />
+                                    </button>
+                                    <span class="w-6 text-center font-mono font-bold text-sm" x-text="selectedTiers[{{ $tier->id }}] || 0"></span>
+                                    <button type="button" @click="incrementQty({{ $tier->id }}, {{ $tier->available_quota }})" class="h-8 w-8 flex items-center justify-center text-gray-600 hover:text-ink transition" aria-label="Tambah">
+                                        <x-icon name="plus" class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
                         @endif
                     </div>
-
-                    {{-- Quantity Selector --}}
-                    @if($tier->available_quota > 0)
-                        <div class="flex items-center gap-3 justify-center" @click.stop>
-                            <button @click="decrementQty({{ $tier->id }})"
-                                    class="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg flex items-center justify-center transition">
-                                −
-                            </button>
-                            <span class="text-xl font-bold text-gray-900 w-8 text-center" x-text="selectedTiers[{{ $tier->id }}] || 0"></span>
-                            <button @click="incrementQty({{ $tier->id }}, {{ $tier->available_quota }})"
-                                    class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg flex items-center justify-center transition">
-                                +
-                            </button>
-                        </div>
-                    @endif
-                </div>
+                </article>
             @endforeach
         </div>
-    </div>
+    </section>
 
-    {{-- Order Summary & Checkout --}}
+    {{-- Checkout bar --}}
     <div x-show="totalItems > 0" x-transition
-         class="sticky bottom-4 z-40 bg-white/95 backdrop-blur border border-indigo-200 rounded-2xl p-5 shadow-xl">
+         class="sticky bottom-4 z-40 bg-ink text-white rounded-2xl p-5 shadow-2xl">
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="w-full md:w-auto">
-                <p class="text-sm text-gray-500">Total Pembayaran</p>
-                <div class="flex items-center gap-3">
-                    <p class="text-2xl font-extrabold text-gray-900">Rp<span x-text="finalPrice.toLocaleString('id-ID')"></span></p>
-                    <p x-show="discountAmount > 0" class="text-sm text-gray-400 line-through decoration-red-500">Rp<span x-text="totalPrice.toLocaleString('id-ID')"></span></p>
+                <p class="eyebrow !text-white/50">Total</p>
+                <div class="flex items-baseline gap-3 mt-1.5">
+                    <p class="font-mono text-2xl font-bold">Rp<span x-text="finalPrice.toLocaleString('id-ID')"></span></p>
+                    <p x-show="discountAmount > 0" class="text-sm text-white/40 line-through font-mono">Rp<span x-text="totalPrice.toLocaleString('id-ID')"></span></p>
                 </div>
-                <p class="text-xs text-gray-400" x-text="totalItems + ' tiket dipilih'"></p>
-                
-                {{-- Promo Code Input --}}
-                <div class="mt-3 flex items-center gap-2 max-w-xs relative z-50">
+                <p class="text-xs text-white/50 mt-1" x-text="totalItems + ' tiket dipilih'"></p>
+
+                <div class="mt-3 flex items-center gap-2 max-w-xs">
                     <input type="text" x-model="promoInput" :disabled="appliedPromo !== ''"
-                           placeholder="Kode Promo (Opsional)"
-                           class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition uppercase disabled:opacity-50">
+                           placeholder="Kode promo"
+                           class="w-full bg-white/10 border border-white/15 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:border-flame-500 focus:ring-0 outline-none transition uppercase disabled:opacity-50">
                     <button x-show="appliedPromo === ''" @click="applyPromo()" :disabled="promoInput === '' || loadingPromo"
-                            class="px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50">
-                        <span x-show="!loadingPromo">Terapkan</span>
-                        <span x-show="loadingPromo">⏳</span>
+                            class="px-3.5 py-2 bg-white text-ink text-sm font-semibold rounded-lg hover:bg-paper transition disabled:opacity-40">
+                        <span x-show="!loadingPromo">Pakai</span>
+                        <svg x-show="loadingPromo" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     </button>
-                    <button x-show="appliedPromo !== ''" @click="removePromo()"
-                            class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-semibold rounded-lg transition">
-                        Batal
-                    </button>
+                    <button x-show="appliedPromo !== ''" @click="removePromo()" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition">Batal</button>
                 </div>
-                <p x-show="promoMessage" class="text-xs font-semibold mt-1" :class="promoError ? 'text-red-500' : 'text-emerald-600'" x-text="promoMessage"></p>
+                <p x-show="promoMessage" class="text-xs font-semibold mt-1.5" :class="promoError ? 'text-red-400' : 'text-emerald-400'" x-text="promoMessage"></p>
             </div>
-            <button @click="checkout()"
-                    :disabled="loading"
-                    class="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                <span x-show="!loading">Checkout Sekarang</span>
+            <button @click="checkout()" :disabled="loading"
+                    class="w-full md:w-auto px-7 py-3.5 bg-flame-500 hover:bg-flame-600 text-white font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <span x-show="!loading" class="flex items-center gap-2">Checkout <x-icon name="arrow-right" class="h-4 w-4" /></span>
                 <span x-show="loading" class="flex items-center gap-2">
                     <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
-                    Memproses...
+                    Memproses
                 </span>
             </button>
         </div>
 
-        {{-- Alert Messages --}}
         <div x-show="alertMessage" x-transition class="mt-3 p-3 rounded-lg text-sm font-semibold"
-             :class="alertType === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'">
+             :class="alertType === 'error' ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'">
             <span x-text="alertMessage"></span>
         </div>
     </div>

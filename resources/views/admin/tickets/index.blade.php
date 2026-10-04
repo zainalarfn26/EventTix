@@ -10,27 +10,27 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Total Tiket</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($counts['total']) }}</p></div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Aktif</p><p class="text-2xl font-bold text-indigo-600 mt-1">{{ number_format($counts['active']) }}</p></div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Sudah Check-in</p><p class="text-2xl font-bold text-emerald-600 mt-1">{{ number_format($counts['checked_in']) }}</p></div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Dibatalkan</p><p class="text-2xl font-bold text-red-500 mt-1">{{ number_format($counts['cancelled']) }}</p></div>
+        <x-stat label="Total tiket" :value="number_format($counts['total'])" />
+        <x-stat label="Tiket aktif" :value="number_format($counts['active'])" />
+        <x-stat label="Sudah check-in" :value="number_format($counts['checked_in'])" />
+        <x-stat label="Dibatalkan" :value="number_format($counts['cancelled'])" />
     </div>
 
     <form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-12 gap-3">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Kode tiket, kode order, nama / email pembeli..." class="md:col-span-5 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        <select name="event_id" onchange="this.form.submit()" class="md:col-span-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Kode tiket, kode order, nama / email pembeli..." class="md:col-span-5 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
+        <select name="event_id" onchange="this.form.submit()" class="md:col-span-3 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
             <option value="">Semua Event</option>
             @foreach($events as $ev)<option value="{{ $ev->id }}" {{ (string) request('event_id') === (string) $ev->id ? 'selected' : '' }}>{{ $ev->title }}</option>@endforeach
         </select>
-        <select name="status" onchange="this.form.submit()" class="md:col-span-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        <select name="status" onchange="this.form.submit()" class="md:col-span-2 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
             <option value="">Semua Status</option>
             <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Aktif</option>
             <option value="checked_in" {{ request('status') === 'checked_in' ? 'selected' : '' }}>Check-in</option>
             <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
         </select>
         <div class="md:col-span-2 flex gap-2">
-            <button type="submit" class="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
-            @if(request()->hasAny(['q', 'event_id', 'status']))<a href="{{ route('admin.tickets.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Reset</a>@endif
+            <button type="submit" class="flex-1 px-4 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
+            @if(request()->hasAny(['q', 'event_id', 'status']))<a href="{{ route('admin.tickets.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-ink">Reset</a>@endif
         </div>
     </form>
 

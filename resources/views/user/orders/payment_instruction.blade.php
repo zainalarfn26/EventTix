@@ -78,7 +78,7 @@
                         
                         <div class="flex items-center justify-center gap-3">
                             <code class="text-3xl font-extrabold text-indigo-600 tracking-wider" id="va-number">{{ $vaNumber }}</code>
-                            <button onclick="navigator.clipboard.writeText('{{ $vaNumber }}'); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Nomor VA Tersalin!', showConfirmButton: false, timer: 1500, background: '#f8fafc', color: '#1e293b' })" class="p-2 text-gray-400 hover:text-indigo-600 bg-white rounded-lg border border-gray-200 shadow-sm transition">
+                            <button onclick="navigator.clipboard.writeText('{{ $vaNumber }}'); Toast.fire({ icon: 'success', title: 'Nomor VA tersalin' })" class="p-2 text-gray-400 hover:text-indigo-600 bg-white rounded-lg border border-gray-200 shadow-sm transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                             </button>
                         </div>
@@ -103,7 +103,7 @@
 
             @if(config('services.midtrans.server_key') === 'SB-Mid-server-dummy-key' || env('APP_ENV') === 'local')
                 <div class="mt-8 pt-6 border-t border-gray-100">
-                    <p class="text-xs text-gray-400 mb-3">🛠 Mode Development: Anda dapat mensimulasikan pembayaran berhasil</p>
+                    <p class="text-xs text-gray-400 mb-3">Mode development: kamu dapat mensimulasikan pembayaran berhasil</p>
                     <button onclick="simulatePayment()" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-semibold text-sm rounded-lg transition">
                         Simulasikan Pembayaran Lunas
                     </button>
@@ -135,12 +135,12 @@ async function simulatePayment() {
         });
         const data = await response.json();
         if(data.success) {
-            Swal.fire({ icon: 'success', title: 'Sukses', text: 'Simulasi berhasil! Sistem akan otomatis mengalihkan...', confirmButtonColor: '#4f46e5', background: '#ffffff', color: '#111827', customClass: { popup: 'rounded-2xl' }});
+            Swal.fire({ ...swalBase, icon: 'success', title: 'Simulasi berhasil', text: 'Kamu akan segera dialihkan ke tiket.' });
         } else {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: data.message, confirmButtonColor: '#4f46e5', background: '#ffffff', color: '#111827', customClass: { popup: 'rounded-2xl' }});
+            Swal.fire({ ...swalBase, icon: 'error', title: 'Gagal', text: data.message });
         }
     } catch(e) {
-        Swal.fire({ icon: 'error', title: 'Oops...', text: 'Error jaringan saat simulasi.', confirmButtonColor: '#4f46e5', background: '#ffffff', color: '#111827', customClass: { popup: 'rounded-2xl' }});
+        Swal.fire({ ...swalBase, icon: 'error', title: 'Jaringan bermasalah', text: 'Gagal menjalankan simulasi.' });
     }
 }
 function countdown(expiryIso, orderCode) {
@@ -181,14 +181,12 @@ function countdown(expiryIso, orderCode) {
                         clearInterval(timer);
                         this.timeLeft = 'LUNAS';
                         Swal.fire({
+                            ...swalBase,
                             icon: 'success',
-                            title: 'Pembayaran Berhasil!',
-                            text: 'Pembayaran telah dikonfirmasi. Mengalihkan ke tiket Anda...',
+                            title: 'Pembayaran berhasil',
+                            text: 'Pembayaran dikonfirmasi. Mengalihkan ke tiketmu...',
                             showConfirmButton: false,
                             timer: 2500,
-                            background: '#ffffff',
-                            color: '#111827',
-                            customClass: { popup: 'rounded-2xl' }
                         }).then(() => {
                             window.location.href = `/orders/${orderCode}/ticket`;
                         });
@@ -197,13 +195,10 @@ function countdown(expiryIso, orderCode) {
                         clearInterval(timer);
                         this.timeLeft = 'DIBATALKAN';
                         Swal.fire({
+                            ...swalBase,
                             icon: 'warning',
-                            title: 'Waktu Habis',
-                            text: 'Order ini telah dibatalkan atau kedaluwarsa.',
-                            confirmButtonColor: '#4f46e5',
-                            background: '#ffffff',
-                            color: '#111827',
-                            customClass: { popup: 'rounded-2xl' }
+                            title: 'Waktu habis',
+                            text: 'Order ini dibatalkan atau sudah kedaluwarsa.',
                         }).then(() => {
                             window.location.href = `/my-tickets`;
                         });

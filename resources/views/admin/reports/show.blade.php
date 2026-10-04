@@ -15,19 +15,19 @@
             <p class="text-sm text-gray-500 mt-1">{{ $event->start_time->translatedFormat('d F Y, H:i') }} • {{ $event->venue->name ?? '-' }} • {{ ucfirst($event->status) }}</p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('admin.events.edit', $event) }}" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition">Edit Event</a>
-            <a href="{{ route('admin.reports.export', $event) }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition inline-flex items-center gap-2">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            <a href="{{ route('admin.events.edit', $event) }}" class="px-4 py-2 bg-white border border-gray-200 hover:border-ink text-gray-700 text-sm font-semibold rounded-lg transition">Edit Event</a>
+            <a href="{{ route('admin.reports.export', $event) }}" class="px-4 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition inline-flex items-center gap-2">
+                <x-icon name="download" class="h-4 w-4" />
                 Export Peserta (CSV)
             </a>
         </div>
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-[#EBF5FF] border border-blue-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Revenue</p><p class="text-xl font-bold text-gray-900 mt-1">Rp{{ number_format($summary['revenue'], 0, ',', '.') }}</p><p class="text-[11px] text-gray-500 mt-1">Diskon promo Rp{{ number_format($summary['discount'], 0, ',', '.') }}</p></div>
-        <div class="bg-[#FFF5F5] border border-red-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Tiket Terjual</p><p class="text-xl font-bold text-gray-900 mt-1">{{ $summary['issued'] }} <span class="text-sm font-medium text-gray-400">/ {{ number_format($summary['quota']) }}</span></p></div>
-        <div class="bg-[#FFFAF0] border border-orange-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Check-in</p><p class="text-xl font-bold text-gray-900 mt-1">{{ $summary['checked_in'] }} <span class="text-sm font-medium text-gray-400">({{ $summary['issued'] > 0 ? round($summary['checked_in'] / $summary['issued'] * 100) : 0 }}%)</span></p></div>
-        <div class="bg-[#E6FFFA] border border-teal-100 rounded-xl p-5"><p class="text-xs font-semibold text-gray-600">Order</p><p class="text-xl font-bold text-gray-900 mt-1">{{ $summary['paid_orders'] }} <span class="text-sm font-medium text-gray-400">dibayar</span></p><p class="text-[11px] text-gray-500 mt-1">{{ $summary['pending_orders'] }} menunggu pembayaran</p></div>
+        <x-stat dark label="Pendapatan" :value="'Rp' . number_format($summary['revenue'], 0, ',', '.')" :hint="'Diskon promo Rp' . number_format($summary['discount'], 0, ',', '.')" />
+        <x-stat label="Tiket terjual" :value="$summary['issued']" :hint="'Dari kuota ' . number_format($summary['quota'])" />
+        <x-stat label="Check-in" :value="$summary['checked_in']" :hint="'Kehadiran ' . ($summary['issued'] > 0 ? round($summary['checked_in'] / $summary['issued'] * 100) : 0) . '%'" />
+        <x-stat label="Order dibayar" :value="$summary['paid_orders']" :hint="$summary['pending_orders'] . ' order menunggu bayar'" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -25,14 +25,14 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-between">
             <div>
                 <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
-                    <img class="h-16 w-16 rounded-full object-cover border-2 border-indigo-100" 
-                         src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=6366f1&color=fff&size=128" 
-                         alt="{{ $user->name }}">
+                    <div class="h-14 w-14 rounded-xl bg-ink text-white flex items-center justify-center font-bold text-xl">
+                        {{ strtoupper(mb_substr($user->name, 0, 1)) }}
+                    </div>
                     <div>
                         <h2 class="text-lg font-bold text-gray-900">{{ $user->name }}</h2>
                         <p class="text-sm text-gray-500">{{ $user->email }}</p>
                         <span class="inline-flex mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider
-                            {{ $user->hasRole('admin') ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700' }}">
+                            {{ $user->hasRole('admin') ? 'bg-flame-100 text-flame-700' : 'bg-gray-100 text-gray-700' }}">
                             {{ $user->getRoleNames()->first() ?? 'User' }}
                         </span>
                     </div>
@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                        <button type="submit" class="w-full px-5 py-2.5 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition shadow-sm">
                             Simpan Perubahan Profil
                         </button>
                     </div>
@@ -67,8 +67,8 @@
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-between">
             <div>
                 <div class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
-                        🔒
+                    <div class="w-10 h-10 rounded-xl bg-paper border border-gray-200 text-ink flex items-center justify-center">
+                        <x-icon name="lock" class="h-5 w-5 text-gray-700" />
                     </div>
                     <div>
                         <h2 class="text-base font-bold text-gray-900">Ubah Kata Sandi</h2>
@@ -99,7 +99,7 @@
                     </div>
 
                     <div class="pt-2">
-                        <button type="submit" class="w-full px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                        <button type="submit" class="w-full px-5 py-2.5 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition shadow-sm">
                             Perbarui Kata Sandi
                         </button>
                     </div>
@@ -111,7 +111,7 @@
     {{-- System Information --}}
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
         <h2 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <span>⚙️</span>
+            <x-icon name="cog" class="h-5 w-5 text-gray-600" />
             <span>Informasi Sistem & Lingkungan Aplikasi</span>
         </h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">

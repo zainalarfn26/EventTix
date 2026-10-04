@@ -9,24 +9,26 @@
             <h1 class="text-2xl font-bold text-gray-900">Kode Promo</h1>
             <p class="text-sm text-gray-500 mt-1">Buat dan atur kode diskon untuk pembeli tiket.</p>
         </div>
-        <button @click="openCreate()" id="btn-add-promo" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition shadow-sm">+ Buat Promo</button>
+        <button @click="openCreate()" id="btn-add-promo" class="inline-flex items-center gap-1.5 px-4 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition shadow-sm">
+            <x-icon name="plus" class="h-4 w-4" /> Buat Promo
+        </button>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Total Promo</p><p class="text-2xl font-bold text-gray-900 mt-1">{{ $stats['total'] }}</p></div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Sedang Berlaku</p><p class="text-2xl font-bold text-emerald-600 mt-1">{{ $stats['active'] }}</p></div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5"><p class="text-xs font-semibold text-gray-500">Total Pemakaian</p><p class="text-2xl font-bold text-indigo-600 mt-1">{{ number_format($stats['usages']) }}</p></div>
+        <x-stat label="Total promo" :value="$stats['total']" />
+        <x-stat label="Sedang berlaku" :value="$stats['active']" />
+        <x-stat label="Total pemakaian" :value="number_format($stats['usages'])" />
     </div>
 
     <form method="GET" class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row gap-3">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari kode promo..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        <select name="status" onchange="this.form.submit()" class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari kode promo..." class="flex-1 bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
+        <select name="status" onchange="this.form.submit()" class="bg-paper border border-gray-200 rounded-lg px-4 py-2 text-sm focus:border-ink focus:ring-0 outline-none">
             <option value="">Semua</option>
             <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Aktif</option>
             <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Nonaktif</option>
         </select>
-        <button type="submit" class="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
-        @if(request()->hasAny(['q', 'status']))<a href="{{ route('admin.promos.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 text-center">Reset</a>@endif
+        <button type="submit" class="px-5 py-2 bg-ink hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition">Cari</button>
+        @if(request()->hasAny(['q', 'status']))<a href="{{ route('admin.promos.index') }}" class="px-3 py-2 text-sm font-semibold text-gray-500 hover:text-ink text-center">Reset</a>@endif
     </form>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">

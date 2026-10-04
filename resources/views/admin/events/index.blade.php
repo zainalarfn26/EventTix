@@ -55,7 +55,10 @@
                                 <svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 {{ $event->start_time->format('H:i') }} WIB
                             </span>
-                            <span class="flex items-center gap-1 text-gray-600 font-medium">🎫 {{ $event->active_tickets_count }} tiket terjual</span>
+                            <span class="flex items-center gap-1.5 text-gray-700 font-medium">
+                                <x-icon name="ticket" class="h-3.5 w-3.5 text-gray-400" />
+                                {{ $event->active_tickets_count }} tiket terjual
+                            </span>
                         </p>
 
                         @if($event->ticketTiers->isNotEmpty())
